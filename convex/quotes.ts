@@ -31,7 +31,7 @@ export const createQuote = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
-    const { adminToken: _, ...quoteData } = args;
+    const { ...quoteData } = args;
     const quoteId = await ctx.db.insert("quotes", {
       ...quoteData,
       property: args.property || "salomons", // Default to Salomons for backward compatibility

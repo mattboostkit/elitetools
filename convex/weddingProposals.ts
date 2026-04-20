@@ -100,7 +100,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
-    const { adminToken: _, ...proposalData } = args;
+    const { ...proposalData } = args;
 
     // Generate a secure but readable slug: "emma-james-x7k9"
     const baseSlug = args.coupleName
@@ -167,7 +167,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
-    const { id, adminToken: _, ...updates } = args;
+    const { id, ...updates } = args;
 
     // Remove undefined values
     const cleanUpdates = Object.fromEntries(
