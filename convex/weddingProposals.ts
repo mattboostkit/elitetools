@@ -5,8 +5,7 @@ import { requireAdmin } from "./adminAuth";
 // Property type for validation
 const propertyValidator = v.union(
   v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl")
+  v.literal("salomons")
 );
 
 /**
@@ -29,7 +28,8 @@ function generateRandomSuffix(length: number = 4): string {
  */
 export const list = query({
   args: {
-    property: v.optional(propertyValidator),  },
+    property: v.optional(propertyValidator),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -52,7 +52,8 @@ export const list = query({
  */
 export const getById = query({
   args: {
-    id: v.id("weddingProposals"),  },
+    id: v.id("weddingProposals"),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -96,7 +97,8 @@ export const create = mutation({
     personalNote: v.optional(v.string()),
     highlightFeatures: v.optional(v.array(v.string())),
     accessCode: v.optional(v.string()),
-    createdBy: v.optional(v.string()),  },
+    createdBy: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -163,7 +165,8 @@ export const update = mutation({
     personalNote: v.optional(v.string()),
     highlightFeatures: v.optional(v.array(v.string())),
     accessCode: v.optional(v.string()),
-    status: v.optional(v.string()),  },
+    status: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -186,7 +189,8 @@ export const update = mutation({
 export const updateStatus = mutation({
   args: {
     id: v.id("weddingProposals"),
-    status: v.string(),  },
+    status: v.string(),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -235,7 +239,8 @@ export const recordView = mutation({
  */
 export const remove = mutation({
   args: {
-    id: v.id("weddingProposals"),  },
+    id: v.id("weddingProposals"),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -250,7 +255,8 @@ export const remove = mutation({
 export const sendProposal = mutation({
   args: {
     id: v.id("weddingProposals"),
-    baseUrl: v.string(),  },
+    baseUrl: v.string(),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -288,7 +294,8 @@ export const sendProposal = mutation({
  */
 export const generateSlug = query({
   args: {
-    coupleName: v.string(),  },
+    coupleName: v.string(),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 

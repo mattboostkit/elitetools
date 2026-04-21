@@ -5,8 +5,7 @@ import { requireAdmin } from "./adminAuth";
 // Property type for validation
 const propertyValidator = v.union(
   v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl")
+  v.literal("salomons")
 );
 
 /**
@@ -27,7 +26,8 @@ export const createQuote = mutation({
       })
     ),
     total: v.number(),
-    status: v.string(),  },
+    status: v.string(),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -47,7 +47,8 @@ export const createQuote = mutation({
  */
 export const getQuote = query({
   args: {
-    quoteId: v.id("quotes"),  },
+    quoteId: v.id("quotes"),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -62,7 +63,8 @@ export const getQuote = query({
  */
 export const listQuotes = query({
   args: {
-    property: v.optional(propertyValidator),  },
+    property: v.optional(propertyValidator),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -87,7 +89,8 @@ export const listQuotes = query({
 export const updateQuoteStatus = mutation({
   args: {
     quoteId: v.id("quotes"),
-    status: v.string(),  },
+    status: v.string(),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -101,7 +104,8 @@ export const updateQuoteStatus = mutation({
  */
 export const deleteQuote = mutation({
   args: {
-    quoteId: v.id("quotes"),  },
+    quoteId: v.id("quotes"),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 

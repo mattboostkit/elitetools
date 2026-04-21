@@ -4,8 +4,7 @@ import { v } from "convex/values";
 // Property validator for multi-property support
 const propertyValidator = v.union(
   v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl")
+  v.literal("salomons")
 );
 
 // Sales team members who can own a lead. Lowercase literal values;

@@ -24,11 +24,10 @@ export const overview = query({
       booked: number;
       declined: number;
     };
-    const properties = ["owp", "salomons", "bewl"] as const;
+    const properties = ["owp", "salomons"] as const;
     const byProperty: Record<(typeof properties)[number], PropStats> = {
       owp: { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
       salomons: { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
-      bewl: { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
     };
     let grandTotal = 0;
     let grandBooked = 0;

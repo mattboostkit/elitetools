@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { EnquiryDrawer, EnquiryStatusBadge } from "@/components/EnquiryDrawer";
 import { AssigneeAvatar, ASSIGNEE_META, type Assignee } from "@/components/Assignee";
 import { BulkActionBar } from "@/components/BulkActionBar";
+import { EnquiryRowActions } from "@/components/EnquiryRowActions";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ import {
   X,
 } from "lucide-react";
 
-type Property = "owp" | "salomons" | "bewl";
+type Property = "owp" | "salomons";
 type AssigneeFilter = "all" | "christie" | "courtney" | "unassigned";
 type SortKey = "createdAt" | "name" | "property" | "status" | "assignedTo";
 type SortDir = "asc" | "desc";
@@ -47,7 +48,6 @@ type SortDir = "asc" | "desc";
 const PROPERTY_LABEL: Record<Property, { name: string; dot: string }> = {
   owp: { name: "One Warwick Park", dot: "bg-amber-500" },
   salomons: { name: "Salomons Estate", dot: "bg-emerald-500" },
-  bewl: { name: "Bewl Water", dot: "bg-blue-500" },
 };
 
 const STATUSES = ["new", "contacted", "quoted", "booked", "declined"] as const;
@@ -65,23 +65,39 @@ export default function EnquiriesPage() {
     if (v === "christie" || v === "courtney" || v === "unassigned") return v;
     return "all" as const;
   })();
+  const initialProperty = (() => {
+    const v = searchParams.get("property");
+    if (v === "owp" || v === "salomons") return v;
+    return "all" as const;
+  })();
+  const initialStatus = (() => {
+    const v = searchParams.get("status");
+    if (v && STATUSES.includes(v as (typeof STATUSES)[number])) return v;
+    return "all";
+  })();
 
-  const [propertyFilter, setPropertyFilter] = useState<Property | "all">("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [propertyFilter, setPropertyFilter] =
+    useState<Property | "all">(initialProperty);
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
   const [assigneeFilter, setAssigneeFilter] =
     useState<AssigneeFilter>(initialAssignee);
   const [searchTerm, setSearchTerm] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Keep local state in sync when the URL param changes (back/forward nav).
+  // Keep local state in sync when the URL params change (back/forward nav
+  // + dashboard deep-links).
   useEffect(() => {
-    const v = searchParams.get("assignee");
-    if (v === "christie" || v === "courtney" || v === "unassigned") {
-      setAssigneeFilter(v);
-    } else {
-      setAssigneeFilter("all");
-    }
+    const a = searchParams.get("assignee");
+    setAssigneeFilter(
+      a === "christie" || a === "courtney" || a === "unassigned" ? a : "all"
+    );
+    const p = searchParams.get("property");
+    setPropertyFilter(p === "owp" || p === "salomons" ? p : "all");
+    const s = searchParams.get("status");
+    setStatusFilter(
+      s && STATUSES.includes(s as (typeof STATUSES)[number]) ? s : "all"
+    );
     setPage(0);
   }, [searchParams]);
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
@@ -272,7 +288,6 @@ export default function EnquiriesPage() {
             <SelectItem value="all">All properties</SelectItem>
             <SelectItem value="owp">One Warwick Park</SelectItem>
             <SelectItem value="salomons">Salomons Estate</SelectItem>
-            <SelectItem value="bewl">Bewl Water</SelectItem>
           </SelectContent>
         </Select>
 
@@ -400,6 +415,9 @@ export default function EnquiriesPage() {
                   dir={sortDir}
                   onClick={() => toggleSort("createdAt")}
                 />
+                <TableHead className="w-12 text-right">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -484,6 +502,12 @@ export default function EnquiriesPage() {
                       {formatDistanceToNow(new Date(e.createdAt), {
                         addSuffix: true,
                       })}
+                    </TableCell>
+                    <TableCell
+                      className="text-right"
+                      onClick={(ev) => ev.stopPropagation()}
+                    >
+                      <EnquiryRowActions enquiry={e} />
                     </TableCell>
                   </TableRow>
                 );

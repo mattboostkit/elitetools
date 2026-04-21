@@ -5,8 +5,7 @@ import { requireAdmin } from "./adminAuth";
 // Property type for validation
 const propertyValidator = v.union(
   v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl")
+  v.literal("salomons")
 );
 
 /**
@@ -66,7 +65,8 @@ export const listFormErrors = query({
   args: {
     property: v.optional(propertyValidator),
     limit: v.optional(v.number()),
-    errorType: v.optional(v.string()),  },
+    errorType: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -102,7 +102,8 @@ export const listFormErrors = query({
  */
 export const getFormErrorStats = query({
   args: {
-    property: v.optional(propertyValidator),    since: v.optional(v.number()), // Timestamp to filter from
+    property: v.optional(propertyValidator),
+    since: v.optional(v.number()), // Timestamp to filter from
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
@@ -137,7 +138,6 @@ export const getFormErrorStats = query({
       byProperty: {
         owp: filteredErrors.filter(e => e.property === "owp").length,
         salomons: filteredErrors.filter(e => e.property === "salomons").length,
-        bewl: filteredErrors.filter(e => e.property === "bewl").length,
       },
       // Recent errors (last 24 hours)
       last24h: filteredErrors.filter(e => e.timestamp > Date.now() - 24 * 60 * 60 * 1000).length,
@@ -154,7 +154,8 @@ export const getFormErrorStats = query({
  * ADMIN ONLY
  */
 export const clearOldFormErrors = mutation({
-  args: {    olderThanDays: v.optional(v.number()),
+  args: {
+    olderThanDays: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);

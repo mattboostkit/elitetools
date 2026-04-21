@@ -51,7 +51,6 @@ const STATUS_FLOW = [
 const PROPERTY_LABEL: Record<string, string> = {
   owp: "One Warwick Park",
   salomons: "Salomons Estate",
-  bewl: "Bewl Water",
 };
 
 const TONE_CLASSES: Record<string, string> = {

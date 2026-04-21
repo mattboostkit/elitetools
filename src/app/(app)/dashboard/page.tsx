@@ -30,7 +30,6 @@ const PROPERTIES = {
     dot: "bg-emerald-500",
     accent: "emerald",
   },
-  bewl: { name: "Bewl Water", dot: "bg-blue-500", accent: "blue" },
 } as const;
 
 const chartConfig = {
@@ -175,47 +174,49 @@ export default function DashboardPage() {
         <h2 className="text-sm font-medium text-muted-foreground mb-3">
           By property
         </h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           {Object.entries(PROPERTIES).map(([key, property]) => {
             const row = kpis?.byProperty[key as keyof typeof PROPERTIES];
             const conversion =
               row && row.total > 0 ? row.booked / row.total : 0;
             return (
-              <Card key={key} className="relative overflow-hidden">
-                <div
-                  className={cn(
-                    "absolute top-0 left-0 w-1 h-full",
-                    property.dot
-                  )}
-                />
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {property.name}
-                    </p>
-                    <span
-                      className={cn("size-2.5 rounded-full", property.dot)}
-                    />
-                  </div>
-                  <p className="text-2xl font-semibold">
-                    {row?.total.toLocaleString() ?? 0}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Total enquiries
-                  </p>
-                  {row && row.total > 0 && (
-                    <div className="mt-4 pt-4 border-t grid grid-cols-3 gap-2 text-xs">
-                      <PropStat label="New" value={row.new} />
-                      <PropStat label="Quoted" value={row.quoted} />
-                      <PropStat
-                        label="Booked"
-                        value={row.booked}
-                        subtitle={`${(conversion * 100).toFixed(0)}%`}
+              <Link key={key} href={`/enquiries?property=${key}`}>
+                <Card className="relative overflow-hidden hover:border-foreground/20 hover:shadow-sm transition">
+                  <div
+                    className={cn(
+                      "absolute top-0 left-0 w-1 h-full",
+                      property.dot
+                    )}
+                  />
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {property.name}
+                      </p>
+                      <span
+                        className={cn("size-2.5 rounded-full", property.dot)}
                       />
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                    <p className="text-2xl font-semibold">
+                      {row?.total.toLocaleString() ?? 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Total enquiries
+                    </p>
+                    {row && row.total > 0 && (
+                      <div className="mt-4 pt-4 border-t grid grid-cols-3 gap-2 text-xs">
+                        <PropStat label="New" value={row.new} />
+                        <PropStat label="Quoted" value={row.quoted} />
+                        <PropStat
+                          label="Booked"
+                          value={row.booked}
+                          subtitle={`${(conversion * 100).toFixed(0)}%`}
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
         </div>
@@ -257,6 +258,7 @@ export default function DashboardPage() {
             hint="Awaiting response"
             icon={<Mail className="size-4 text-muted-foreground" />}
             accent="text-foreground"
+            href="/enquiries?status=new"
           />
           <StatCard
             label="Quoted"
@@ -264,6 +266,7 @@ export default function DashboardPage() {
             hint="Pending decisions"
             icon={<FileText className="size-4 text-blue-500" />}
             accent="text-blue-600 dark:text-blue-400"
+            href="/enquiries?status=quoted"
           />
           <StatCard
             label="Booked"
@@ -271,6 +274,7 @@ export default function DashboardPage() {
             hint="Confirmed bookings"
             icon={<TrendingUp className="size-4 text-emerald-500" />}
             accent="text-emerald-600 dark:text-emerald-400"
+            href="/enquiries?status=booked"
           />
           <StatCard
             label="Form Errors (24h)"
@@ -278,6 +282,7 @@ export default function DashboardPage() {
             hint="Client-side failures"
             icon={<AlertTriangle className="size-4 text-red-500" />}
             accent="text-red-600 dark:text-red-400"
+            href="/form-errors"
           />
         </div>
       </div>
@@ -413,15 +418,21 @@ function StatCard({
   hint,
   icon,
   accent,
+  href,
 }: {
   label: string;
   value: number | undefined;
   hint: string;
   icon: React.ReactNode;
   accent: string;
+  href?: string;
 }) {
-  return (
-    <Card>
+  const card = (
+    <Card
+      className={cn(
+        href && "hover:border-foreground/20 hover:shadow-sm transition"
+      )}
+    >
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium text-muted-foreground">{label}</p>
@@ -432,4 +443,5 @@ function StatCard({
       </CardContent>
     </Card>
   );
+  return href ? <Link href={href}>{card}</Link> : card;
 }

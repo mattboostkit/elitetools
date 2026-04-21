@@ -5,8 +5,7 @@ import { requireAdmin } from "./adminAuth";
 // Property type for validation
 const propertyValidator = v.union(
   v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl")
+  v.literal("salomons")
 );
 
 /**
@@ -108,7 +107,8 @@ export const list = query({
   args: {
     property: v.optional(propertyValidator),
     status: v.optional(v.string()),
-    limit: v.optional(v.number()),  },
+    limit: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -148,7 +148,8 @@ export const listSubscribers = list;
  */
 export const getSubscriberStats = query({
   args: {
-    property: v.optional(propertyValidator),  },
+    property: v.optional(propertyValidator),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -169,7 +170,6 @@ export const getSubscriberStats = query({
       byProperty: {
         owp: subscribers.filter((s) => s.property === "owp").length,
         salomons: subscribers.filter((s) => s.property === "salomons").length,
-        bewl: subscribers.filter((s) => s.property === "bewl").length,
         unknown: subscribers.filter((s) => !s.property).length,
       },
     };

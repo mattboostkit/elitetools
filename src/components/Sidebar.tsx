@@ -33,11 +33,6 @@ const properties = [
     href: "https://www.salomons-estate.com",
     dot: "bg-emerald-500",
   },
-  {
-    name: "Bewl Water",
-    href: "https://www.bewlwater.co.uk",
-    dot: "bg-blue-500",
-  },
 ];
 
 export function Sidebar() {

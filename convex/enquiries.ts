@@ -6,8 +6,7 @@ import { logEvent } from "./enquiryEvents";
 // Property type for validation
 const propertyValidator = v.union(
   v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl")
+  v.literal("salomons")
 );
 
 // Sales team assignee
@@ -94,7 +93,8 @@ export const create = mutation({
  */
 export const getEnquiry = query({
   args: {
-    enquiryId: v.id("enquiries"),  },
+    enquiryId: v.id("enquiries"),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -111,7 +111,8 @@ export const list = query({
   args: {
     property: v.optional(propertyValidator),
     status: v.optional(v.string()),
-    limit: v.optional(v.number()),  },
+    limit: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -154,7 +155,8 @@ export const listEnquiries = list;
 export const updateStatus = mutation({
   args: {
     id: v.id("enquiries"),
-    status: v.string(),  },
+    status: v.string(),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -184,7 +186,8 @@ export const updateStatus = mutation({
 export const updateEnquiryStatus = mutation({
   args: {
     enquiryId: v.id("enquiries"),
-    status: v.string(),  },
+    status: v.string(),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -214,7 +217,8 @@ export const updateEnquiryStatus = mutation({
  */
 export const deleteEnquiry = mutation({
   args: {
-    enquiryId: v.id("enquiries"),  },
+    enquiryId: v.id("enquiries"),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -366,7 +370,8 @@ export const bulkDelete = mutation({
  */
 export const getEnquiriesStats = query({
   args: {
-    property: v.optional(propertyValidator),  },
+    property: v.optional(propertyValidator),
+  },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -394,7 +399,6 @@ export const getEnquiriesStats = query({
       byProperty: {
         owp: enquiries.filter((e) => e.property === "owp").length,
         salomons: enquiries.filter((e) => e.property === "salomons").length,
-        bewl: enquiries.filter((e) => e.property === "bewl").length,
       },
       // Stats by assignee (open leads only — new/contacted/quoted count
       // against the team member's active workload; booked/declined don't)
