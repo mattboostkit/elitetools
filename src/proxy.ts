@@ -1,8 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
+// Only /sign-in is public. Sign-up is invite-only — new users arrive via
+// Clerk-issued invitation links, not a public /sign-up route. The route
+// file has been removed and this matcher no longer allowlists it, so any
+// visit to /sign-up is bounced to /sign-in by auth.protect().
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
-  "/sign-up(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
