@@ -260,6 +260,107 @@ export const assign = mutation({
 });
 
 /**
+ * Bulk-apply a status update and/or assignment to many enquiries in a
+ * single mutation. Keeps the UI responsive when the sales team triages
+ * several leads at once. Each changed enquiry still gets its own
+ * timeline event via logEvent.
+ * ADMIN ONLY
+ */
+export const bulkUpdate = mutation({
+  args: {
+    ids: v.array(v.id("enquiries")),
+    status: v.optional(v.string()),
+    assignee: v.optional(v.union(assigneeValidator, v.null())),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    if (args.ids.length === 0) return { updated: 0 };
+    if (args.status === undefined && args.assignee === undefined) {
+      return { updated: 0 };
+    }
+
+    if (args.status !== undefined) {
+      const validStatuses = [
+        "new",
+        "read",
+        "responded",
+        "archived",
+        "contacted",
+        "quoted",
+        "booked",
+        "declined",
+      ];
+      if (!validStatuses.includes(args.status)) {
+        throw new Error("Invalid status");
+      }
+    }
+
+    let updated = 0;
+    for (const id of args.ids) {
+      const existing = await ctx.db.get(id);
+      if (!existing) continue;
+
+      const patch: Record<string, string | undefined> = {};
+      let statusChanged = false;
+      let assigneeChanged = false;
+
+      if (args.status !== undefined && existing.status !== args.status) {
+        patch.status = args.status;
+        statusChanged = true;
+      }
+      if (
+        args.assignee !== undefined &&
+        (existing.assignedTo ?? null) !== args.assignee
+      ) {
+        patch.assignedTo = args.assignee ?? undefined;
+        assigneeChanged = true;
+      }
+
+      if (!statusChanged && !assigneeChanged) continue;
+
+      await ctx.db.patch(id, patch);
+      if (statusChanged) {
+        await logEvent(ctx, {
+          enquiryId: id,
+          type: "status_change",
+          fromValue: existing.status,
+          toValue: args.status!,
+        });
+      }
+      if (assigneeChanged) {
+        await logEvent(ctx, {
+          enquiryId: id,
+          type: args.assignee ? "assigned" : "unassigned",
+          fromValue: existing.assignedTo ?? undefined,
+          toValue: args.assignee ?? undefined,
+        });
+      }
+      updated++;
+    }
+    return { updated };
+  },
+});
+
+/**
+ * Bulk delete. ADMIN ONLY.
+ */
+export const bulkDelete = mutation({
+  args: { ids: v.array(v.id("enquiries")) },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    let deleted = 0;
+    for (const id of args.ids) {
+      const existing = await ctx.db.get(id);
+      if (!existing) continue;
+      await ctx.db.delete(id);
+      deleted++;
+    }
+    return { deleted };
+  },
+});
+
+/**
  * Get enquiries count by status (with optional property filter)
  * ADMIN ONLY
  */

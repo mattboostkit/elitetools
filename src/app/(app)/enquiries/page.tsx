@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { Doc } from "../../../../convex/_generated/dataModel";
+import { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EnquiryDrawer, EnquiryStatusBadge } from "@/components/EnquiryDrawer";
 import { AssigneeAvatar, ASSIGNEE_META, type Assignee } from "@/components/Assignee";
+import { BulkActionBar } from "@/components/BulkActionBar";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -69,6 +71,8 @@ export default function EnquiriesPage() {
   const [assigneeFilter, setAssigneeFilter] =
     useState<AssigneeFilter>(initialAssignee);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Keep local state in sync when the URL param changes (back/forward nav).
   useEffect(() => {
@@ -149,6 +153,48 @@ export default function EnquiriesPage() {
       | Doc<"enquiries">
       | undefined) ?? null;
 
+  // Keyboard shortcuts. "/" focuses search (unless already typing in a
+  // field); Esc closes drawer, clears selection, or blurs search depending
+  // on state.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+
+      if (e.key === "/" && !typing) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+        return;
+      }
+
+      if (e.key === "Escape") {
+        if (selectedId) {
+          setSelectedId(null);
+        } else if (selected.size > 0) {
+          setSelected(new Set());
+        } else if (document.activeElement === searchInputRef.current) {
+          searchInputRef.current?.blur();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [selectedId, selected.size]);
+
+  // Prune IDs from selection if they're no longer in the filtered list
+  // (e.g., because of delete or filter change)
+  const selectedIds = useMemo(() => {
+    if (!enquiries || selected.size === 0) return [];
+    const stillPresent = new Set<string>(enquiries.map((e) => e._id));
+    const alive = [...selected].filter((id) => stillPresent.has(id));
+    return alive as Id<"enquiries">[];
+  }, [enquiries, selected]);
+
   const pageCount = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount - 1);
 
@@ -189,7 +235,8 @@ export default function EnquiriesPage() {
         <div className="relative flex-1 min-w-[240px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
-            placeholder="Search name, email, message…"
+            ref={searchInputRef}
+            placeholder="Search name, email, message…   (press / to focus)"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -297,6 +344,30 @@ export default function EnquiriesPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    aria-label="Select all on this page"
+                    checked={
+                      paged.length > 0 &&
+                      paged.every((e) => selected.has(e._id))
+                        ? true
+                        : paged.some((e) => selected.has(e._id))
+                          ? "indeterminate"
+                          : false
+                    }
+                    onCheckedChange={(checked) => {
+                      setSelected((prev) => {
+                        const next = new Set(prev);
+                        if (checked === true) {
+                          paged.forEach((e) => next.add(e._id));
+                        } else {
+                          paged.forEach((e) => next.delete(e._id));
+                        }
+                        return next;
+                      });
+                    }}
+                  />
+                </TableHead>
                 <SortableHead
                   label="Property"
                   active={sortKey === "property"}
@@ -341,9 +412,30 @@ export default function EnquiriesPage() {
                     onClick={() => setSelectedId(e._id)}
                     className={cn(
                       "cursor-pointer",
-                      selectedId === e._id && "bg-muted/60"
+                      selectedId === e._id && "bg-muted/60",
+                      selected.has(e._id) && "bg-primary/5"
                     )}
                   >
+                    <TableCell
+                      className="w-10"
+                      onClick={(ev) => ev.stopPropagation()}
+                    >
+                      <Checkbox
+                        aria-label={`Select enquiry from ${e.name}`}
+                        checked={selected.has(e._id)}
+                        onCheckedChange={(checked) => {
+                          setSelected((prev) => {
+                            const next = new Set(prev);
+                            if (checked) {
+                              next.add(e._id);
+                            } else {
+                              next.delete(e._id);
+                            }
+                            return next;
+                          });
+                        }}
+                      />
+                    </TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-2">
                         <span
@@ -435,6 +527,11 @@ export default function EnquiriesPage() {
       <EnquiryDrawer
         enquiry={selectedEnquiry}
         onClose={() => setSelectedId(null)}
+      />
+
+      <BulkActionBar
+        selectedIds={selectedIds}
+        onCleared={() => setSelected(new Set())}
       />
     </div>
   );
