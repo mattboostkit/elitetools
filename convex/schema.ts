@@ -8,10 +8,18 @@ const propertyValidator = v.union(
   v.literal("bewl")
 );
 
+// Sales team members who can own a lead. Lowercase literal values;
+// display name is derived in the UI.
+const assigneeValidator = v.union(
+  v.literal("christie"),
+  v.literal("courtney")
+);
+
 export default defineSchema({
   // Contact form enquiries - unified across all properties
   enquiries: defineTable({
     property: v.optional(propertyValidator), // Optional for backward compatibility
+    assignedTo: v.optional(assigneeValidator), // Which sales team member owns this lead
     name: v.string(),
     email: v.string(),
     phone: v.optional(v.string()),
@@ -34,6 +42,7 @@ export default defineSchema({
     .index("by_property", ["property"])
     .index("by_property_status", ["property", "status"])
     .index("by_status", ["status"])
+    .index("by_assignedTo", ["assignedTo"])
     .index("by_created", ["createdAt"]),
 
   // Newsletter subscriptions - unified across all properties

@@ -9,6 +9,12 @@ const propertyValidator = v.union(
   v.literal("bewl")
 );
 
+// Sales team assignee
+const assigneeValidator = v.union(
+  v.literal("christie"),
+  v.literal("courtney")
+);
+
 /**
  * Create a new enquiry from the contact form
  * PUBLIC - no auth required (form submission)
@@ -203,6 +209,24 @@ export const deleteEnquiry = mutation({
 });
 
 /**
+ * Assign (or un-assign) an enquiry to a sales team member.
+ * Pass assignee: null to clear the assignment.
+ * ADMIN ONLY
+ */
+export const assign = mutation({
+  args: {
+    id: v.id("enquiries"),
+    assignee: v.union(assigneeValidator, v.null()),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    await ctx.db.patch(args.id, {
+      assignedTo: args.assignee ?? undefined,
+    });
+  },
+});
+
+/**
  * Get enquiries count by status (with optional property filter)
  * ADMIN ONLY
  */
@@ -237,6 +261,25 @@ export const getEnquiriesStats = query({
         owp: enquiries.filter((e) => e.property === "owp").length,
         salomons: enquiries.filter((e) => e.property === "salomons").length,
         bewl: enquiries.filter((e) => e.property === "bewl").length,
+      },
+      // Stats by assignee (open leads only — new/contacted/quoted count
+      // against the team member's active workload; booked/declined don't)
+      byAssignee: {
+        christie: enquiries.filter(
+          (e) =>
+            e.assignedTo === "christie" &&
+            ["new", "contacted", "quoted"].includes(e.status)
+        ).length,
+        courtney: enquiries.filter(
+          (e) =>
+            e.assignedTo === "courtney" &&
+            ["new", "contacted", "quoted"].includes(e.status)
+        ).length,
+        unassigned: enquiries.filter(
+          (e) =>
+            !e.assignedTo &&
+            ["new", "contacted", "quoted"].includes(e.status)
+        ).length,
       },
     };
 

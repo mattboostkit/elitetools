@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Doc } from "../../../../convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EnquiryDrawer, EnquiryStatusBadge } from "@/components/EnquiryDrawer";
+import { AssigneeAvatar, ASSIGNEE_META, type Assignee } from "@/components/Assignee";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +38,8 @@ import {
 } from "lucide-react";
 
 type Property = "owp" | "salomons" | "bewl";
-type SortKey = "createdAt" | "name" | "property" | "status";
+type AssigneeFilter = "all" | "christie" | "courtney" | "unassigned";
+type SortKey = "createdAt" | "name" | "property" | "status" | "assignedTo";
 type SortDir = "asc" | "desc";
 
 const PROPERTY_LABEL: Record<Property, { name: string; dot: string }> = {
@@ -54,9 +57,29 @@ const PAGE_SIZE = 25;
 const FETCH_LIMIT = 1000;
 
 export default function EnquiriesPage() {
+  const searchParams = useSearchParams();
+  const initialAssignee = (() => {
+    const v = searchParams.get("assignee");
+    if (v === "christie" || v === "courtney" || v === "unassigned") return v;
+    return "all" as const;
+  })();
+
   const [propertyFilter, setPropertyFilter] = useState<Property | "all">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [assigneeFilter, setAssigneeFilter] =
+    useState<AssigneeFilter>(initialAssignee);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Keep local state in sync when the URL param changes (back/forward nav).
+  useEffect(() => {
+    const v = searchParams.get("assignee");
+    if (v === "christie" || v === "courtney" || v === "unassigned") {
+      setAssigneeFilter(v);
+    } else {
+      setAssigneeFilter("all");
+    }
+    setPage(0);
+  }, [searchParams]);
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [page, setPage] = useState(0);
@@ -72,7 +95,7 @@ export default function EnquiriesPage() {
     if (!enquiries) return { paged: [], total: 0, filteredTotal: 0 };
 
     const term = searchTerm.trim().toLowerCase();
-    const filtered = term
+    const bySearch = term
       ? enquiries.filter(
           (e) =>
             e.name.toLowerCase().includes(term) ||
@@ -83,6 +106,13 @@ export default function EnquiriesPage() {
             (e.phone ?? "").toLowerCase().includes(term)
         )
       : enquiries;
+
+    const filtered =
+      assigneeFilter === "all"
+        ? bySearch
+        : assigneeFilter === "unassigned"
+          ? bySearch.filter((e) => !e.assignedTo)
+          : bySearch.filter((e) => e.assignedTo === assigneeFilter);
 
     const sorted = [...filtered].sort((a, b) => {
       let cmp: number;
@@ -95,6 +125,9 @@ export default function EnquiriesPage() {
           break;
         case "status":
           cmp = a.status.localeCompare(b.status);
+          break;
+        case "assignedTo":
+          cmp = (a.assignedTo ?? "~").localeCompare(b.assignedTo ?? "~");
           break;
         case "createdAt":
         default:
@@ -109,7 +142,7 @@ export default function EnquiriesPage() {
       total: enquiries.length,
       filteredTotal: filtered.length,
     };
-  }, [enquiries, searchTerm, sortKey, sortDir, page]);
+  }, [enquiries, searchTerm, assigneeFilter, sortKey, sortDir, page]);
 
   const selectedEnquiry =
     (enquiries?.find((e) => e._id === selectedId) as
@@ -133,11 +166,15 @@ export default function EnquiriesPage() {
     setSearchTerm("");
     setPropertyFilter("all");
     setStatusFilter("all");
+    setAssigneeFilter("all");
     setPage(0);
   };
 
   const hasFilters =
-    searchTerm !== "" || propertyFilter !== "all" || statusFilter !== "all";
+    searchTerm !== "" ||
+    propertyFilter !== "all" ||
+    statusFilter !== "all" ||
+    assigneeFilter !== "all";
 
   return (
     <div className="space-y-6">
@@ -212,6 +249,24 @@ export default function EnquiriesPage() {
           </SelectContent>
         </Select>
 
+        <Select
+          value={assigneeFilter}
+          onValueChange={(v) => {
+            setAssigneeFilter(v as AssigneeFilter);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Any assignee" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any assignee</SelectItem>
+            <SelectItem value="christie">Christie</SelectItem>
+            <SelectItem value="courtney">Courtney</SelectItem>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
+          </SelectContent>
+        </Select>
+
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={resetFilters}>
             Clear filters
@@ -253,6 +308,12 @@ export default function EnquiriesPage() {
                   active={sortKey === "name"}
                   dir={sortDir}
                   onClick={() => toggleSort("name")}
+                />
+                <SortableHead
+                  label="Owner"
+                  active={sortKey === "assignedTo"}
+                  dir={sortDir}
+                  onClick={() => toggleSort("assignedTo")}
                 />
                 <TableHead>Subject / Event</TableHead>
                 <SortableHead
@@ -298,6 +359,23 @@ export default function EnquiriesPage() {
                       <p className="text-xs text-muted-foreground">
                         {e.email}
                       </p>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <AssigneeAvatar
+                          assignee={e.assignedTo as Assignee}
+                        />
+                        <span
+                          className={cn(
+                            "text-sm",
+                            !e.assignedTo && "text-muted-foreground"
+                          )}
+                        >
+                          {e.assignedTo
+                            ? ASSIGNEE_META[e.assignedTo].name
+                            : "Unassigned"}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm">
                       {e.subject || e.eventType || "—"}

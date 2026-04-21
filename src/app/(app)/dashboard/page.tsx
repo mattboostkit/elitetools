@@ -6,6 +6,7 @@ import { Mail, TrendingUp, FileText, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { AssigneeAvatar, ASSIGNEE_META } from "@/components/Assignee";
 
 const PROPERTIES = {
   owp: { name: "One Warwick Park", dot: "bg-amber-500" },
@@ -55,6 +56,24 @@ export default function DashboardPage() {
             </Card>
           );
         })}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <AssigneeCard
+          assignee="christie"
+          count={stats?.byAssignee?.christie ?? 0}
+          href="/enquiries?assignee=christie"
+        />
+        <AssigneeCard
+          assignee="courtney"
+          count={stats?.byAssignee?.courtney ?? 0}
+          href="/enquiries?assignee=courtney"
+        />
+        <AssigneeCard
+          assignee={null}
+          count={stats?.byAssignee?.unassigned ?? 0}
+          href="/enquiries?assignee=unassigned"
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -120,6 +139,35 @@ export default function DashboardPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+function AssigneeCard({
+  assignee,
+  count,
+  href,
+}: {
+  assignee: "christie" | "courtney" | null;
+  count: number;
+  href: string;
+}) {
+  const name = assignee ? ASSIGNEE_META[assignee].name : "Unassigned";
+  const hint = assignee
+    ? "Open leads (new · contacted · quoted)"
+    : "Leads needing an owner";
+  return (
+    <Link href={href} className="block">
+      <Card className="hover:border-foreground/20 hover:shadow-sm transition">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <AssigneeAvatar assignee={assignee} size="md" />
+            <p className="text-sm font-medium">{name}</p>
+          </div>
+          <p className="text-2xl font-semibold">{count}</p>
+          <p className="text-xs text-muted-foreground mt-1">{hint}</p>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 

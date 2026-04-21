@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { AssigneePicker, type Assignee } from "@/components/Assignee";
 import {
   Sheet,
   SheetContent,
@@ -125,6 +126,16 @@ export function EnquiryDrawer({
             </SheetHeader>
 
             <div className="px-6 py-5 space-y-6">
+              <section>
+                <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">
+                  Assigned to
+                </h3>
+                <AssigneePicker
+                  enquiryId={enquiry._id}
+                  assignee={enquiry.assignedTo as Assignee}
+                />
+              </section>
+
               <section>
                 <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">
                   Status
