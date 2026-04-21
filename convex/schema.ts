@@ -16,6 +16,25 @@ const assigneeValidator = v.union(
 );
 
 export default defineSchema({
+  // Timeline of events per enquiry: notes from the sales team + auto-logged
+  // activity (status changes, assignment). Keeps a running audit trail so
+  // anyone can see what's happened without reading the Convex logs.
+  enquiryEvents: defineTable({
+    enquiryId: v.id("enquiries"),
+    type: v.union(
+      v.literal("note"),
+      v.literal("status_change"),
+      v.literal("assigned"),
+      v.literal("unassigned")
+    ),
+    body: v.optional(v.string()), // For notes
+    fromValue: v.optional(v.string()), // For status/assignment changes
+    toValue: v.optional(v.string()),
+    actorName: v.optional(v.string()),
+    actorEmail: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_enquiry", ["enquiryId", "createdAt"]),
+
   // Contact form enquiries - unified across all properties
   enquiries: defineTable({
     property: v.optional(propertyValidator), // Optional for backward compatibility

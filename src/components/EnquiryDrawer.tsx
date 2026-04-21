@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AssigneePicker, type Assignee } from "@/components/Assignee";
+import { EnquiryTimeline } from "@/components/EnquiryTimeline";
 import {
   Sheet,
   SheetContent,
@@ -221,6 +222,13 @@ export function EnquiryDrawer({
                 <div className="mt-3 p-4 rounded-md bg-muted/50 border text-sm whitespace-pre-wrap">
                   {enquiry.message}
                 </div>
+              </section>
+
+              <section>
+                <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-3">
+                  Notes & activity
+                </h3>
+                <EnquiryTimeline enquiryId={enquiry._id} />
               </section>
 
               {(enquiry.utmSource ||

@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "./adminAuth";
+import { logEvent } from "./enquiryEvents";
 
 // Property type for validation
 const propertyValidator = v.union(
@@ -163,7 +164,17 @@ export const updateStatus = mutation({
       throw new Error("Invalid status");
     }
 
+    const existing = await ctx.db.get(args.id);
+    if (!existing) throw new Error("Enquiry not found");
+    if (existing.status === args.status) return;
+
     await ctx.db.patch(args.id, { status: args.status });
+    await logEvent(ctx, {
+      enquiryId: args.id,
+      type: "status_change",
+      fromValue: existing.status,
+      toValue: args.status,
+    });
   },
 });
 
@@ -183,7 +194,17 @@ export const updateEnquiryStatus = mutation({
       throw new Error("Invalid status");
     }
 
+    const existing = await ctx.db.get(args.enquiryId);
+    if (!existing) throw new Error("Enquiry not found");
+    if (existing.status === args.status) return;
+
     await ctx.db.patch(args.enquiryId, { status: args.status });
+    await logEvent(ctx, {
+      enquiryId: args.enquiryId,
+      type: "status_change",
+      fromValue: existing.status,
+      toValue: args.status,
+    });
   },
 });
 
@@ -220,8 +241,20 @@ export const assign = mutation({
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
+    const existing = await ctx.db.get(args.id);
+    if (!existing) throw new Error("Enquiry not found");
+    const before = existing.assignedTo ?? null;
+    const after = args.assignee;
+    if (before === after) return;
+
     await ctx.db.patch(args.id, {
-      assignedTo: args.assignee ?? undefined,
+      assignedTo: after ?? undefined,
+    });
+    await logEvent(ctx, {
+      enquiryId: args.id,
+      type: after ? "assigned" : "unassigned",
+      fromValue: before ?? undefined,
+      toValue: after ?? undefined,
     });
   },
 });
