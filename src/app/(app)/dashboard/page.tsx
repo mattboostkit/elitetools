@@ -4,7 +4,8 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Mail, TrendingUp, FileText, AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { clsx } from "clsx";
+import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 
 const PROPERTIES = {
   owp: { name: "One Warwick Park", dot: "bg-amber-500" },
@@ -19,88 +20,85 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">Dashboard</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Overview across all properties
         </p>
       </div>
 
-      {/* Per-property enquiry totals */}
       <div className="grid gap-4 md:grid-cols-3">
         {Object.entries(PROPERTIES).map(([key, property]) => {
-          const count = stats?.byProperty?.[key as keyof typeof PROPERTIES] ?? 0;
+          const count =
+            stats?.byProperty?.[key as keyof typeof PROPERTIES] ?? 0;
           return (
-            <div
-              key={key}
-              className="relative overflow-hidden rounded-lg border border-zinc-200 bg-white p-6"
-            >
+            <Card key={key} className="relative overflow-hidden">
               <div
-                className={clsx(
+                className={cn(
                   "absolute top-0 left-0 w-1 h-full",
                   property.dot
                 )}
               />
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-zinc-600">
-                  {property.name}
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {property.name}
+                  </p>
+                  <span
+                    className={cn("size-2.5 rounded-full", property.dot)}
+                  />
+                </div>
+                <p className="text-2xl font-semibold">{count}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Total enquiries
                 </p>
-                <span
-                  className={clsx("w-2.5 h-2.5 rounded-full", property.dot)}
-                />
-              </div>
-              <p className="text-2xl font-semibold text-zinc-900">
-                {count}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1">Total enquiries</p>
-            </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
 
-      {/* Summary row */}
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard
           label="New Enquiries"
           value={stats?.new}
           hint="Awaiting response"
-          icon={<Mail className="w-4 h-4 text-zinc-400" />}
-          accent="text-zinc-900"
+          icon={<Mail className="size-4 text-muted-foreground" />}
+          accent="text-foreground"
         />
         <StatCard
           label="Quoted"
           value={stats?.quoted}
           hint="Pending decisions"
-          icon={<FileText className="w-4 h-4 text-blue-500" />}
-          accent="text-blue-600"
+          icon={<FileText className="size-4 text-blue-500" />}
+          accent="text-blue-600 dark:text-blue-400"
         />
         <StatCard
           label="Booked"
           value={stats?.booked}
           hint="Confirmed bookings"
-          icon={<TrendingUp className="w-4 h-4 text-emerald-500" />}
-          accent="text-emerald-600"
+          icon={<TrendingUp className="size-4 text-emerald-500" />}
+          accent="text-emerald-600 dark:text-emerald-400"
         />
         <StatCard
           label="Form Errors (24h)"
           value={formErrorStats?.last24h}
           hint="Client-side failures"
-          icon={<AlertTriangle className="w-4 h-4 text-red-500" />}
-          accent="text-red-600"
+          icon={<AlertTriangle className="size-4 text-red-500" />}
+          accent="text-red-600 dark:text-red-400"
         />
       </div>
 
-      {/* Quick actions */}
       <div className="grid gap-4 md:grid-cols-2">
         <Link
           href="/enquiries"
-          className="flex items-center gap-4 p-6 rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm transition"
+          className="flex items-center gap-4 p-6 rounded-lg border bg-card hover:border-foreground/20 hover:shadow-sm transition"
         >
-          <div className="p-3 bg-zinc-100 rounded-lg">
-            <Mail className="w-5 h-5 text-zinc-700" />
+          <div className="p-3 bg-muted rounded-lg">
+            <Mail className="size-5" />
           </div>
           <div>
             <p className="font-medium">View enquiries</p>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               {stats?.total ?? 0} total across all properties
             </p>
           </div>
@@ -108,14 +106,14 @@ export default function DashboardPage() {
 
         <Link
           href="/proposals"
-          className="flex items-center gap-4 p-6 rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm transition"
+          className="flex items-center gap-4 p-6 rounded-lg border bg-card hover:border-foreground/20 hover:shadow-sm transition"
         >
-          <div className="p-3 bg-pink-50 rounded-lg">
-            <FileText className="w-5 h-5 text-pink-600" />
+          <div className="p-3 bg-pink-50 dark:bg-pink-950 rounded-lg">
+            <FileText className="size-5 text-pink-600 dark:text-pink-400" />
           </div>
           <div>
             <p className="font-medium">Wedding proposals</p>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               Personalised pages for couples
             </p>
           </div>
@@ -139,13 +137,15 @@ function StatCard({
   accent: string;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-6">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-medium text-zinc-600">{label}</p>
-        {icon}
-      </div>
-      <p className={clsx("text-2xl font-semibold", accent)}>{value ?? 0}</p>
-      <p className="text-xs text-zinc-500 mt-1">{hint}</p>
-    </div>
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+          {icon}
+        </div>
+        <p className={cn("text-2xl font-semibold", accent)}>{value ?? 0}</p>
+        <p className="text-xs text-muted-foreground mt-1">{hint}</p>
+      </CardContent>
+    </Card>
   );
 }

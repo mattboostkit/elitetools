@@ -12,7 +12,7 @@ import {
   Building2,
   ExternalLink,
 } from "lucide-react";
-import { clsx } from "clsx";
+import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -64,7 +64,7 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={clsx(
+              className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
                 active
                   ? "bg-white/10 text-white"
@@ -90,7 +90,7 @@ export function Sidebar() {
             rel="noopener noreferrer"
             className="flex items-center gap-3 px-3 py-2 rounded-md text-xs text-zinc-400 hover:bg-white/5 hover:text-white transition-colors"
           >
-            <span className={clsx("w-2 h-2 rounded-full", p.dot)} />
+            <span className={cn("w-2 h-2 rounded-full", p.dot)} />
             <span className="flex-1">{p.name}</span>
             <ExternalLink size={12} />
           </a>
