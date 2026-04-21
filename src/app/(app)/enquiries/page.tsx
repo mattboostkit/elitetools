@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { Doc } from "../../../../convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { clsx } from "clsx";
+import { EnquiryDrawer } from "@/components/EnquiryDrawer";
 
 type Property = "owp" | "salomons" | "bewl";
 
@@ -19,12 +21,18 @@ const STATUSES = ["new", "contacted", "quoted", "booked", "declined"] as const;
 export default function EnquiriesPage() {
   const [propertyFilter, setPropertyFilter] = useState<Property | "all">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const enquiries = useQuery(api.enquiries.list, {
     property: propertyFilter === "all" ? undefined : propertyFilter,
     status: statusFilter === "all" ? undefined : statusFilter,
     limit: 100,
   });
+
+  const selectedEnquiry =
+    (enquiries?.find((e) => e._id === selectedId) as
+      | Doc<"enquiries">
+      | undefined) ?? null;
 
   return (
     <div className="space-y-6">
@@ -88,7 +96,11 @@ export default function EnquiriesPage() {
                 return (
                   <tr
                     key={e._id}
-                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50"
+                    onClick={() => setSelectedId(e._id)}
+                    className={clsx(
+                      "border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 cursor-pointer",
+                      selectedId === e._id && "bg-zinc-50"
+                    )}
                   >
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-2">
@@ -123,6 +135,11 @@ export default function EnquiriesPage() {
           </table>
         )}
       </div>
+
+      <EnquiryDrawer
+        enquiry={selectedEnquiry}
+        onClose={() => setSelectedId(null)}
+      />
     </div>
   );
 }
