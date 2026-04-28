@@ -46,3 +46,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local agent state and tool-installed skill mirrors
+# (skills-lock.json IS committed as the source of truth — agents reinstall from it)
+.claude/
+.agents/
+
+# One-time data migration artefacts (contains real customer enquiry data + export zips)
+/.migration/
