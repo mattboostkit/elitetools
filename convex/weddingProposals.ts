@@ -5,7 +5,9 @@ import { requireAdmin } from "./adminAuth";
 // Property type for validation
 const propertyValidator = v.union(
   v.literal("owp"),
-  v.literal("salomons")
+  v.literal("salomons"),
+  v.literal("bewl-water"),
+  v.literal("bewl-adventures")
 );
 
 /**

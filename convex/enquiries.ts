@@ -3,10 +3,14 @@ import { v } from "convex/values";
 import { requireAdmin } from "./adminAuth";
 import { logEvent } from "./enquiryEvents";
 
-// Property type for validation
+// Property type for validation. Mirrors schema.ts — when adding venues,
+// update both this file and schema.ts (and the other modules that
+// duplicate this validator).
 const propertyValidator = v.union(
   v.literal("owp"),
-  v.literal("salomons")
+  v.literal("salomons"),
+  v.literal("bewl-water"),
+  v.literal("bewl-adventures")
 );
 
 // Sales team assignee
@@ -30,6 +34,9 @@ export const create = mutation({
     preferredDate: v.optional(v.string()),
     guestCount: v.optional(v.number()),
     message: v.string(),
+    // Origin of the lead (e.g. "ranger-bewl-water", "concierge-owp",
+    // "contact-form"). Used to attribute conversion sources beyond UTM.
+    source: v.optional(v.string()),
     // UTM tracking fields
     utmSource: v.optional(v.string()),
     utmMedium: v.optional(v.string()),
@@ -73,6 +80,7 @@ export const create = mutation({
       message: args.message.trim(),
       status: "new",
       createdAt: Date.now(),
+      source: args.source,
       // UTM tracking fields
       utmSource: args.utmSource,
       utmMedium: args.utmMedium,

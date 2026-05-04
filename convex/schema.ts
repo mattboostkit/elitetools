@@ -1,10 +1,14 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// Property validator for multi-property support
+// Property validator for multi-property support.
+// Add new venues here; the field is v.optional() everywhere so existing
+// rows remain valid when the union is widened.
 const propertyValidator = v.union(
   v.literal("owp"),
-  v.literal("salomons")
+  v.literal("salomons"),
+  v.literal("bewl-water"),
+  v.literal("bewl-adventures")
 );
 
 // Sales team members who can own a lead. Lowercase literal values;
@@ -48,6 +52,9 @@ export default defineSchema({
     message: v.string(),
     status: v.string(), // 'new', 'read', 'responded', 'archived', 'contacted', 'quoted', 'booked', 'declined'
     createdAt: v.number(),
+    // Origin of the lead — e.g. "ranger-bewl-water", "concierge-owp",
+    // "contact-form", "wedding-cost-calculator". Optional for back-compat.
+    source: v.optional(v.string()),
     // UTM tracking fields for marketing attribution
     utmSource: v.optional(v.string()),     // Traffic source (google, facebook, etc.)
     utmMedium: v.optional(v.string()),     // Marketing medium (cpc, organic, social)

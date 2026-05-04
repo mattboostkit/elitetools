@@ -24,10 +24,19 @@ export const overview = query({
       booked: number;
       declined: number;
     };
-    const properties = ["owp", "salomons"] as const;
+    // Mirrors the schema's propertyValidator union. New venues here
+    // start at zero stats; admin UI iterates these keys.
+    const properties = [
+      "owp",
+      "salomons",
+      "bewl-water",
+      "bewl-adventures",
+    ] as const;
     const byProperty: Record<(typeof properties)[number], PropStats> = {
       owp: { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
       salomons: { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
+      "bewl-water": { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
+      "bewl-adventures": { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
     };
     let grandTotal = 0;
     let grandBooked = 0;
