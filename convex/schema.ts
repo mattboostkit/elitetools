@@ -63,6 +63,7 @@ export default defineSchema({
     utmTerm: v.optional(v.string()),       // Search keyword (optional)
     gclid: v.optional(v.string()),         // Google Click ID (auto-added by Google Ads)
     landingPage: v.optional(v.string()),   // The page URL where the visitor first landed
+    hearAboutUs: v.optional(v.string()),   // Self-reported "how did you hear about us" answer
   })
     .index("by_property", ["property"])
     .index("by_property_status", ["property", "status"])

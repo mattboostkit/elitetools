@@ -45,6 +45,8 @@ export const create = mutation({
     utmTerm: v.optional(v.string()),
     gclid: v.optional(v.string()),
     landingPage: v.optional(v.string()),
+    // Self-reported "how did you hear about us" dropdown answer
+    hearAboutUs: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Basic email validation
@@ -89,6 +91,7 @@ export const create = mutation({
       utmTerm: args.utmTerm,
       gclid: args.gclid,
       landingPage: args.landingPage,
+      hearAboutUs: args.hearAboutUs,
     });
 
     return enquiryId;

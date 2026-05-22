@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AssigneePicker, type Assignee } from "@/components/Assignee";
 import { EnquiryTimeline } from "@/components/EnquiryTimeline";
+import { hearAboutUsLabel } from "@/lib/hearAboutUs";
 import {
   Sheet,
   SheetContent,
@@ -215,6 +216,12 @@ export function EnquiryDrawer({
                       }
                       label="Guests"
                       value={String(enquiry.guestCount)}
+                    />
+                  )}
+                  {enquiry.hearAboutUs && (
+                    <DetailRow
+                      label="Heard via"
+                      value={hearAboutUsLabel(enquiry.hearAboutUs)}
                     />
                   )}
                 </dl>

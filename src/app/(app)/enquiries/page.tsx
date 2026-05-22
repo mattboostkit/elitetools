@@ -8,6 +8,7 @@ import { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { EnquiryDrawer, EnquiryStatusBadge } from "@/components/EnquiryDrawer";
+import { hearAboutUsLabel } from "@/lib/hearAboutUs";
 import { AssigneeAvatar, ASSIGNEE_META, type Assignee } from "@/components/Assignee";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { EnquiryRowActions } from "@/components/EnquiryRowActions";
@@ -493,10 +494,17 @@ export default function EnquiriesPage() {
                     <TableCell>
                       <EnquiryStatusBadge status={e.status} />
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {e.utmSource
-                        ? `${e.utmSource}${e.utmMedium ? ` · ${e.utmMedium}` : ""}`
-                        : "direct"}
+                    <TableCell className="text-xs">
+                      {e.hearAboutUs && (
+                        <span className="block text-foreground">
+                          {hearAboutUsLabel(e.hearAboutUs)}
+                        </span>
+                      )}
+                      <span className="block text-muted-foreground">
+                        {e.utmSource
+                          ? `${e.utmSource}${e.utmMedium ? ` · ${e.utmMedium}` : ""}`
+                          : "direct"}
+                      </span>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(e.createdAt), {
