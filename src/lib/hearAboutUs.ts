@@ -18,7 +18,7 @@ export const HEAR_ABOUT_US_OPTIONS: HearAboutUsOption[] = [
   { value: "google", label: "Google" },
   { value: "hitched", label: "Hitched" },
   { value: "owp-website", label: "One Warwick Park Website" },
-  { value: "salomons-website", label: "Salomons Website" },
+  { value: "salomons-website", label: "Salomons Estate Website" },
   { value: "local-client", label: "Local Client" },
   { value: "passing-by", label: "Passing By" },
   { value: "employee-referral", label: "Employee Referral" },
