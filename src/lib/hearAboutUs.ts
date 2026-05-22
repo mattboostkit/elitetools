@@ -26,6 +26,7 @@ export const HEAR_ABOUT_US_OPTIONS: HearAboutUsOption[] = [
   { value: "repeat-client", label: "Repeat Client" },
   { value: "social-media", label: "Social Media" },
   { value: "other", label: "Other" },
+  { value: "prefer-not-to-say", label: "Prefer not to say" },
 ];
 
 /**
