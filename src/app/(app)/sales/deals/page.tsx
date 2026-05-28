@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
+import { CreateDealDialog } from "@/components/CreateDealDialog";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,7 @@ export default function DealsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
   const [salespersonFilter, setSalespersonFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const deals = useQuery(api.deals.list, {
     property: propertyFilter === "all" ? undefined : (propertyFilter as Property),
@@ -126,7 +128,7 @@ export default function DealsPage() {
         title="Deals"
         description={`Signed contracts across every property. ${filtered.length} deal${filtered.length === 1 ? "" : "s"} · ${formatGBP(totalValue)} total value.`}
         actions={
-          <Button size="sm" disabled title="Create deal coming next">
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" />
             New deal
           </Button>
@@ -272,6 +274,8 @@ export default function DealsPage() {
           </Table>
         )}
       </div>
+
+      <CreateDealDialog open={createOpen} onOpenChange={setCreateOpen} />
     </>
   );
 }

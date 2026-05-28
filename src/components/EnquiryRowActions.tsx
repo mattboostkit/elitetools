@@ -26,9 +26,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Tag, UserCircle2, Trash2, UserX } from "lucide-react";
+import { MoreHorizontal, Tag, UserCircle2, Trash2, UserX, TrendingUp } from "lucide-react";
 import { EnquiryStatusBadge } from "@/components/EnquiryDrawer";
 import { ASSIGNEE_META, AssigneeAvatar } from "@/components/Assignee";
+import { CreateDealDialog } from "@/components/CreateDealDialog";
 
 const STATUSES = ["new", "contacted", "quoted", "booked", "declined"] as const;
 
@@ -41,6 +42,7 @@ export function EnquiryRowActions({
   const assign = useMutation(api.enquiries.assign);
   const deleteEnquiry = useMutation(api.enquiries.deleteEnquiry);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [promoteOpen, setPromoteOpen] = useState(false);
 
   return (
     <>
@@ -128,6 +130,16 @@ export function EnquiryRowActions({
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
+            onClick={() => setPromoteOpen(true)}
+            className="gap-2"
+          >
+            <TrendingUp className="size-4" />
+            Promote to deal
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
               setConfirmOpen(true);
@@ -160,6 +172,12 @@ export function EnquiryRowActions({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreateDealDialog
+        open={promoteOpen}
+        onOpenChange={setPromoteOpen}
+        fromEnquiry={enquiry}
+      />
     </>
   );
 }
