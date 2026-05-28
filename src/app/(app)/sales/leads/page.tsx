@@ -51,7 +51,19 @@ const PROPERTY_LABEL: Record<Property, { name: string; dot: string }> = {
   salomons: { name: "Salomons Estate", dot: "bg-emerald-500" },
 };
 
-const STATUSES = ["new", "contacted", "quoted", "booked", "declined"] as const;
+// Full enum from schema comment: new, read, responded, archived, contacted,
+// quoted, booked, declined. Hardcoded so empty-data states still show all
+// options.
+const STATUSES = [
+  "new",
+  "read",
+  "responded",
+  "archived",
+  "contacted",
+  "quoted",
+  "booked",
+  "declined",
+] as const;
 const PAGE_SIZE = 25;
 
 // v1 loads the full set (capped at 1000) and filters/sorts/paginates
@@ -83,6 +95,11 @@ export default function LeadsPage() {
   const [assigneeFilter, setAssigneeFilter] =
     useState<AssigneeFilter>(initialAssignee);
   const [searchTerm, setSearchTerm] = useState("");
+  // New filters — local state only (no URL params needed)
+  const [subjectFilter, setSubjectFilter] = useState<string>("all");
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [dayFilter, setDayFilter] = useState<string>("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,6 +129,53 @@ export default function LeadsPage() {
     limit: FETCH_LIMIT,
   });
 
+  // Derive unique option lists from loaded data for dynamic dropdowns.
+  // hasNone* flags whether any row lacks a value — controls whether "(none)"
+  // appears as a selectable option.
+  const {
+    subjectOptions,
+    hasNoneSubject,
+    eventTypeOptions,
+    hasNoneEventType,
+    sourceOptions,
+    hasNoneSource,
+  } = useMemo(() => {
+    if (!enquiries) {
+      return {
+        subjectOptions: [] as string[],
+        hasNoneSubject: false,
+        eventTypeOptions: [] as string[],
+        hasNoneEventType: false,
+        sourceOptions: [] as string[],
+        hasNoneSource: false,
+      };
+    }
+    const subjects = new Set<string>();
+    const events = new Set<string>();
+    const sources = new Set<string>();
+    let noneSubject = false;
+    let noneEvent = false;
+    let noneSource = false;
+    for (const e of enquiries) {
+      if (e.subject) subjects.add(e.subject);
+      else noneSubject = true;
+      if (e.eventType) events.add(e.eventType);
+      else noneEvent = true;
+      if (e.source) sources.add(e.source);
+      else noneSource = true;
+    }
+    const toSorted = (s: Set<string>) =>
+      [...s].sort((a, b) => a.localeCompare(b));
+    return {
+      subjectOptions: toSorted(subjects),
+      hasNoneSubject: noneSubject,
+      eventTypeOptions: toSorted(events),
+      hasNoneEventType: noneEvent,
+      sourceOptions: toSorted(sources),
+      hasNoneSource: noneSource,
+    };
+  }, [enquiries]);
+
   const { paged, total, filteredTotal } = useMemo(() => {
     if (!enquiries) return { paged: [], total: 0, filteredTotal: 0 };
 
@@ -128,12 +192,45 @@ export default function LeadsPage() {
         )
       : enquiries;
 
-    const filtered =
+    const byAssignee =
       assigneeFilter === "all"
         ? bySearch
         : assigneeFilter === "unassigned"
           ? bySearch.filter((e) => !e.assignedTo)
           : bySearch.filter((e) => e.assignedTo === assigneeFilter);
+
+    // Subject filter — "(none)" matches rows where subject is undefined/empty.
+    const bySubject =
+      subjectFilter === "all"
+        ? byAssignee
+        : subjectFilter === "(none)"
+          ? byAssignee.filter((e) => !e.subject)
+          : byAssignee.filter((e) => e.subject === subjectFilter);
+
+    // Event type filter — same "(none)" convention.
+    const byEventType =
+      eventTypeFilter === "all"
+        ? bySubject
+        : eventTypeFilter === "(none)"
+          ? bySubject.filter((e) => !e.eventType)
+          : bySubject.filter((e) => e.eventType === eventTypeFilter);
+
+    // Source filter — "(none)" matches rows where source is undefined/empty.
+    const bySource =
+      sourceFilter === "all"
+        ? byEventType
+        : sourceFilter === "(none)"
+          ? byEventType.filter((e) => !e.source)
+          : byEventType.filter((e) => e.source === sourceFilter);
+
+    // Day filter — compare ISO date prefix of createdAt timestamp.
+    const filtered =
+      dayFilter === ""
+        ? bySource
+        : bySource.filter(
+            (e) =>
+              new Date(e.createdAt).toISOString().slice(0, 10) === dayFilter
+          );
 
     const sorted = [...filtered].sort((a, b) => {
       let cmp: number;
@@ -163,7 +260,18 @@ export default function LeadsPage() {
       total: enquiries.length,
       filteredTotal: filtered.length,
     };
-  }, [enquiries, searchTerm, assigneeFilter, sortKey, sortDir, page]);
+  }, [
+    enquiries,
+    searchTerm,
+    assigneeFilter,
+    subjectFilter,
+    eventTypeFilter,
+    sourceFilter,
+    dayFilter,
+    sortKey,
+    sortDir,
+    page,
+  ]);
 
   const selectedEnquiry =
     (enquiries?.find((e) => e._id === selectedId) as
@@ -230,6 +338,10 @@ export default function LeadsPage() {
     setPropertyFilter("all");
     setStatusFilter("all");
     setAssigneeFilter("all");
+    setSubjectFilter("all");
+    setEventTypeFilter("all");
+    setSourceFilter("all");
+    setDayFilter("");
     setPage(0);
   };
 
@@ -237,7 +349,11 @@ export default function LeadsPage() {
     searchTerm !== "" ||
     propertyFilter !== "all" ||
     statusFilter !== "all" ||
-    assigneeFilter !== "all";
+    assigneeFilter !== "all" ||
+    subjectFilter !== "all" ||
+    eventTypeFilter !== "all" ||
+    sourceFilter !== "all" ||
+    dayFilter !== "";
 
   return (
     <div className="space-y-6">
@@ -329,6 +445,90 @@ export default function LeadsPage() {
             <SelectItem value="unassigned">Unassigned</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Subject filter — OWP-side field */}
+        <Select
+          value={subjectFilter}
+          onValueChange={(v) => {
+            setSubjectFilter(v);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All subjects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All subjects</SelectItem>
+            {hasNoneSubject && (
+              <SelectItem value="(none)">(none)</SelectItem>
+            )}
+            {subjectOptions.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Event type filter — Salomons-side field */}
+        <Select
+          value={eventTypeFilter}
+          onValueChange={(v) => {
+            setEventTypeFilter(v);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All events" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All events</SelectItem>
+            {hasNoneEventType && (
+              <SelectItem value="(none)">(none)</SelectItem>
+            )}
+            {eventTypeOptions.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Source filter */}
+        <Select
+          value={sourceFilter}
+          onValueChange={(v) => {
+            setSourceFilter(v);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="All sources" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All sources</SelectItem>
+            {hasNoneSource && (
+              <SelectItem value="(none)">(none)</SelectItem>
+            )}
+            {sourceOptions.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Day filter — shows enquiries from a single calendar day */}
+        <input
+          type="date"
+          value={dayFilter}
+          onChange={(e) => {
+            setDayFilter(e.target.value);
+            setPage(0);
+          }}
+          className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          aria-label="Filter by day"
+        />
 
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={resetFilters}>
