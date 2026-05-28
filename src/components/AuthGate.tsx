@@ -1,30 +1,34 @@
 "use client";
 
 import { useConvexAuth } from "convex/react";
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 
 /**
- * Defers rendering of children until Convex has a validated auth token.
+ * Defers rendering until Convex has seen the user authenticated at least once.
  *
- * Without this, useQuery calls can fire during the brief window between
- * Clerk finishing its handshake and the token reaching Convex — during
- * which ctx.auth.getUserIdentity() returns null and any query calling
- * requireAdmin() throws, crashing the page via the React error boundary.
- *
- * The Clerk proxy guarantees the user is signed in before this component
- * mounts, so isAuthenticated going false here means Clerk's token is
- * still loading, not that the user is signed out.
+ * Earlier version flipped between spinner and children every time
+ * useConvexAuth oscillated, which on a dev Clerk instance caused visible
+ * flicker on the dashboard. This version latches: once we've seen
+ * isAuthenticated === true once, we stay mounted forever. If Convex
+ * briefly drops auth (network blip, token refresh) the inner tree
+ * continues rendering against the last-known good auth — queries that
+ * fail will surface their own errors instead of taking the whole UI down.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { isLoading, isAuthenticated } = useConvexAuth();
+  const { isAuthenticated } = useConvexAuth();
+  const everAuthenticated = useRef(false);
 
-  if (isLoading || !isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
-      </div>
-    );
+  if (isAuthenticated) {
+    everAuthenticated.current = true;
   }
 
-  return <>{children}</>;
+  if (everAuthenticated.current) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="flex items-center justify-center py-24">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
+    </div>
+  );
 }
