@@ -1,22 +1,24 @@
 "use client";
 
-import { useUser, useOrganization } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import type { PermissionContext } from "@/components/layout/nav-config";
 
 /**
- * Reads Clerk user + org membership and exposes the permission shape
+ * Reads Clerk user identity + publicMetadata to expose the permission shape
  * canSeeSection / canSeeItem expect.
  *
- * Scaffold phase: ELC has no Clerk teams configured yet. The
- * configuredTeams set is empty, so all teamSlug-gated sections
- * default to visible. Admin gate uses the `publicMetadata.role`
- * field on the Clerk user.
+ * Scaffold phase: ELC has no Clerk teams (Organizations) configured. The
+ * configuredTeams set is empty, so all teamSlug-gated sections default to
+ * visible. Admin gate uses `publicMetadata.role` on the Clerk user.
+ *
+ * If/when ELC adopts Clerk Organizations for team-based gating, re-introduce
+ * useOrganization() here and populate configuredTeams + isTeamMember from
+ * the active org's slug. Not needed today.
  */
 export function usePermissions(): PermissionContext & { isLoading: boolean } {
   const { user, isLoaded: userLoaded } = useUser();
-  const { isLoaded: orgLoaded } = useOrganization();
 
-  const isLoading = !userLoaded || !orgLoaded;
+  const isLoading = !userLoaded;
 
   const role = (user?.publicMetadata?.role as string | undefined) ?? "member";
   const isAdmin = role === "admin" || role === "creator";
