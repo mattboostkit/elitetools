@@ -36,6 +36,7 @@ export function isoInMonthUpToDay(
   monthKey: string,
   day: number
 ): boolean {
+  if (iso.length < 10) return false;
   if (iso.slice(0, 7) !== monthKey) return false;
   return Number(iso.slice(8, 10)) <= day;
 }
@@ -52,7 +53,8 @@ export function pctDelta(current: number, previous: number): number | null {
 }
 
 /**
- * Most frequent key across rows. Undefined keys are skipped. Ties resolve
+ * Most frequent key across rows. Undefined and empty-string keys are
+ * skipped. Ties resolve
  * to the first key seen (insertion order, strict > comparison). Null when
  * nothing counted.
  */

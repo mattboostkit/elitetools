@@ -17,8 +17,9 @@ describe("monthKeyFromTimestamp", () => {
   it("formats a timestamp as YYYY-MM in UTC", () => {
     expect(monthKeyFromTimestamp(MAY_15)).toBe("2026-05");
   });
-  it("uses UTC, not local time, at month boundaries", () => {
-    expect(monthKeyFromTimestamp(Date.UTC(2026, 0, 1, 0, 0, 0))).toBe("2026-01");
+  it("uses UTC not local time at a UTC month boundary", () => {
+    // 2025-12-31T23:30:00Z — December in UTC, January in UTC+1 and beyond
+    expect(monthKeyFromTimestamp(Date.UTC(2025, 11, 31, 23, 30, 0))).toBe("2025-12");
   });
 });
 
@@ -52,6 +53,9 @@ describe("isoInMonthUpToDay", () => {
   });
   it("handles datetime ISO strings (slices first 10 chars)", () => {
     expect(isoInMonthUpToDay("2026-05-09T08:30:00Z", "2026-05", 15)).toBe(true);
+  });
+  it("returns false for a bare YYYY-MM string (no day part)", () => {
+    expect(isoInMonthUpToDay("2026-05", "2026-05", 31)).toBe(false);
   });
 });
 
@@ -106,5 +110,13 @@ describe("topByValue", () => {
   });
   it("returns null for an empty set", () => {
     expect(topByValue([] as { p?: string; v: number }[], (r) => r.p, (r) => r.v)).toBeNull();
+  });
+  it("skips undefined keys", () => {
+    const rows = [{ p: undefined, v: 100 }, { p: "owp", v: 50 }];
+    expect(topByValue(rows, (r) => r.p, (r) => r.v)).toEqual({ key: "owp", value: 50 });
+  });
+  it("breaks ties by first-seen", () => {
+    const rows = [{ p: "a", v: 100 }, { p: "b", v: 100 }];
+    expect(topByValue(rows, (r) => r.p, (r) => r.v)).toEqual({ key: "a", value: 100 });
   });
 });
