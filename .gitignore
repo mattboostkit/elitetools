@@ -54,3 +54,5 @@ next-env.d.ts
 
 # One-time data migration artefacts (contains real customer enquiry data + export zips)
 /.migration/
+
+.vercel

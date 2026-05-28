@@ -112,7 +112,7 @@ Once the dashboard loads (empty data is fine), the next items are:
    - Follow the DNS records they give you at your registrar
    - ~2 minutes to propagate
 
-2. **Port the Proposals UI** from Salomons (`src/app/(admin)/admin/proposals/page.tsx` in `C:/Dev/Cascade/ELC/salomons`)
+2. **Port the Proposals UI** from Salomons (`src/app/(admin)/admin/proposals/page.tsx` in `C:/dev/projects/ELC/salomons`)
    - Convex schema + functions already ported
    - Just need to port the React page + adjust property filter
    - Estimate: ~45 minutes
@@ -155,7 +155,7 @@ In order:
 
 So you have context of what's been touched while picking this up:
 
-### One Warwick Park (`C:/Dev/Cascade/ELC/owp`)
+### One Warwick Park (`C:/dev/projects/ELC/owp`)
 
 **Shipped and deployed:**
 - Two `/blog/*` catch-all redirects removed (the site's blog posts had been 308-redirecting to `/blog` since launch — largest SEO hit of the year)
@@ -174,7 +174,7 @@ So you have context of what's been touched while picking this up:
 - Turnstile / rate limiting on the Convex enquiries mutation (spam hardening)
 - Cross-publishing 4–5 Salomons-tagged blog posts for OWP
 
-### Elite Tools (`C:/Dev/Cascade/ELC/elitetools`)
+### Elite Tools (`C:/dev/projects/ELC/elitetools`)
 
 - See "Current state" section above
 - Proposals + Quotes UI still stubs (dashboard, enquiries list, form errors list are all live-wired to Convex)
@@ -185,7 +185,7 @@ So you have context of what's been touched while picking this up:
 ## Quick reference — how to work on Elite Tools locally
 
 ```bash
-cd C:/Dev/Cascade/ELC/elitetools
+cd C:/dev/projects/ELC/elitetools
 
 # Terminal 1 (Convex watcher — leave running)
 npx convex dev
