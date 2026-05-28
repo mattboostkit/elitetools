@@ -43,7 +43,7 @@ export const overview = query({
     const openValue = open.reduce((s, d) => s + d.contractValue, 0);
 
     const contractsSignedThisMonth = liveDeals.filter(
-      (d) => d.signedDate.slice(0, 7) === thisMonth
+      (d) => d.signedDate?.slice(0, 7) === thisMonth
     ).length;
 
     const pendingSent = quotes.filter((q) => q.status === "sent").length;
@@ -65,6 +65,8 @@ export const overview = query({
     const revenueMTD = liveDeals
       .filter((d) => isoInMonthUpToDay(d.signedDate, thisMonth, today))
       .reduce((s, d) => s + d.contractValue, 0);
+    // Prior-month figure is the like-for-like 1st→today slice (not the full
+    // month), so the MTD delta compares equal-length periods.
     const revenuePrevMonth = liveDeals
       .filter((d) => isoInMonthUpToDay(d.signedDate, lastMonth, today))
       .reduce((s, d) => s + d.contractValue, 0);
@@ -74,6 +76,8 @@ export const overview = query({
       (d) => d.property,
       (d) => d.contractValue
     );
+    // source and utmSource can label the same channel differently; counts may
+    // split across both keys until lead-origin is normalised upstream.
     const bestSrc = topByCount(
       enquiries,
       (e) => e.source ?? e.utmSource ?? undefined
@@ -92,6 +96,8 @@ export const overview = query({
     // Marketing availability probe — empty until an ingestion cron exists.
     const adRow = await ctx.db.query("googleAdsMetrics").first();
 
+    // commissionDataAvailable is scoped to the CURRENT period — true only when
+    // a payout run exists for thisMonth (matches what the commission card shows).
     return {
       generatedAt: now,
       salesPipeline: {
