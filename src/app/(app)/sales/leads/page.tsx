@@ -32,6 +32,14 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import {
+  type Property,
+  PROPERTY_ORDER,
+  PROPERTY_META,
+  propertyLabel,
+  propertyDot,
+  isProperty,
+} from "@/lib/properties";
+import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -41,15 +49,9 @@ import {
   X,
 } from "lucide-react";
 
-type Property = "owp" | "salomons";
 type AssigneeFilter = "all" | "christie" | "courtney" | "unassigned";
 type SortKey = "createdAt" | "name" | "property" | "status" | "assignedTo";
 type SortDir = "asc" | "desc";
-
-const PROPERTY_LABEL: Record<Property, { name: string; dot: string }> = {
-  owp: { name: "One Warwick Park", dot: "bg-amber-500" },
-  salomons: { name: "Salomons Estate", dot: "bg-emerald-500" },
-};
 
 // Full enum from schema comment: new, read, responded, archived, contacted,
 // quoted, booked, declined. Hardcoded so empty-data states still show all
@@ -80,8 +82,7 @@ export default function LeadsPage() {
   })();
   const initialProperty = (() => {
     const v = searchParams.get("property");
-    if (v === "owp" || v === "salomons") return v;
-    return "all" as const;
+    return isProperty(v) ? v : ("all" as const);
   })();
   const initialStatus = (() => {
     const v = searchParams.get("status");
@@ -111,7 +112,7 @@ export default function LeadsPage() {
       a === "christie" || a === "courtney" || a === "unassigned" ? a : "all"
     );
     const p = searchParams.get("property");
-    setPropertyFilter(p === "owp" || p === "salomons" ? p : "all");
+    setPropertyFilter(isProperty(p) ? p : "all");
     const s = searchParams.get("status");
     setStatusFilter(
       s && STATUSES.includes(s as (typeof STATUSES)[number]) ? s : "all"
@@ -403,8 +404,11 @@ export default function LeadsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All properties</SelectItem>
-            <SelectItem value="owp">One Warwick Park</SelectItem>
-            <SelectItem value="salomons">Salomons Estate</SelectItem>
+            {PROPERTY_ORDER.map((p) => (
+              <SelectItem key={p} value={p}>
+                {PROPERTY_META[p].label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -623,8 +627,6 @@ export default function LeadsPage() {
             </TableHeader>
             <TableBody>
               {paged.map((e) => {
-                const prop = (e.property ?? "owp") as Property;
-                const label = PROPERTY_LABEL[prop] ?? PROPERTY_LABEL.owp;
                 return (
                   <TableRow
                     key={e._id}
@@ -658,10 +660,13 @@ export default function LeadsPage() {
                     <TableCell>
                       <span className="inline-flex items-center gap-2">
                         <span
-                          className={cn("size-2 rounded-full", label.dot)}
+                          className={cn(
+                            "size-2 rounded-full",
+                            propertyDot(e.property)
+                          )}
                         />
                         <span className="text-muted-foreground">
-                          {label.name}
+                          {propertyLabel(e.property)}
                         </span>
                       </span>
                     </TableCell>

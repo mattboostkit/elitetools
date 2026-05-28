@@ -26,16 +26,9 @@ import {
 } from "@/components/ui/table";
 import { Loader2, Plus, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { type Property, PROPERTY_ORDER, propertyLabel } from "@/lib/properties";
 
-type Property = "owp" | "salomons" | "bewl-water" | "bewl-adventures";
 type Status = "provisional" | "contracted" | "completed" | "cancelled";
-
-const PROPERTY_LABEL: Record<Property, string> = {
-  owp: "One Warwick Park",
-  salomons: "Salomons Estate",
-  "bewl-water": "Bewl Water",
-  "bewl-adventures": "Bewl Adventures",
-};
 
 const STATUS_LABEL: Record<Status, string> = {
   provisional: "Provisional",
@@ -154,9 +147,9 @@ export default function DealsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All properties</SelectItem>
-            {(Object.keys(PROPERTY_LABEL) as Property[]).map((p) => (
+            {PROPERTY_ORDER.map((p) => (
               <SelectItem key={p} value={p}>
-                {PROPERTY_LABEL[p]}
+                {propertyLabel(p)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -246,7 +239,7 @@ export default function DealsPage() {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm">
-                      {PROPERTY_LABEL[d.property as Property] ?? d.property}
+                      {propertyLabel(d.property)}
                     </span>
                   </TableCell>
                   <TableCell>

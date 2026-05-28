@@ -24,18 +24,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { type Property, PROPERTY_ORDER, propertyLabel } from "@/lib/properties";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
-type Property = "owp" | "salomons" | "bewl-water" | "bewl-adventures";
 type Status = "provisional" | "contracted" | "completed" | "cancelled";
-
-const PROPERTY_LABEL: Record<Property, string> = {
-  owp: "One Warwick Park",
-  salomons: "Salomons Estate",
-  "bewl-water": "Bewl Water",
-  "bewl-adventures": "Bewl Adventures",
-};
 
 const STATUS_LABEL: Record<Status, string> = {
   provisional: "Provisional",
@@ -336,9 +329,9 @@ export function CreateDealDialog({
                     <SelectValue placeholder="Select property" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(PROPERTY_LABEL) as Property[]).map((p) => (
+                    {PROPERTY_ORDER.map((p) => (
                       <SelectItem key={p} value={p}>
-                        {PROPERTY_LABEL[p]}
+                        {propertyLabel(p)}
                       </SelectItem>
                     ))}
                   </SelectContent>
