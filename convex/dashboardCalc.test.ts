@@ -5,7 +5,6 @@ import {
   dayOfMonth,
   isoInMonthUpToDay,
   conversionRate,
-  pctDelta,
   topByCount,
   topByValue,
 } from "./dashboardCalc";
@@ -65,16 +64,6 @@ describe("conversionRate", () => {
   });
   it("returns 0 when total is 0 (no divide-by-zero)", () => {
     expect(conversionRate(0, 0)).toBe(0);
-  });
-});
-
-describe("pctDelta", () => {
-  it("returns the fractional change", () => {
-    expect(pctDelta(120, 100)).toBeCloseTo(0.2);
-    expect(pctDelta(80, 100)).toBeCloseTo(-0.2);
-  });
-  it("returns null when previous is 0", () => {
-    expect(pctDelta(50, 0)).toBeNull();
   });
 });
 

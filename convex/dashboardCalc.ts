@@ -46,12 +46,6 @@ export function conversionRate(booked: number, total: number): number {
   return total > 0 ? booked / total : 0;
 }
 
-/** Fractional change current vs previous; null when previous is 0. */
-export function pctDelta(current: number, previous: number): number | null {
-  if (previous === 0) return null;
-  return (current - previous) / previous;
-}
-
 /**
  * Most frequent key across rows. Undefined and empty-string keys are
  * skipped. Ties resolve
