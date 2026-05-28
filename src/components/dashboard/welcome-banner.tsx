@@ -5,7 +5,8 @@ export function WelcomeBanner() {
         Welcome back
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Real-time data wiring lands in the next iteration.
+        Live across every property. Cards update in real time as leads, deals,
+        and quotes change.
       </p>
     </div>
   );
