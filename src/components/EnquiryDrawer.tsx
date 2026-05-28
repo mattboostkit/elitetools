@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { AssigneePicker, type Assignee } from "@/components/Assignee";
 import { EnquiryTimeline } from "@/components/EnquiryTimeline";
 import { hearAboutUsLabel } from "@/lib/hearAboutUs";
+import { propertyLabel } from "@/lib/properties";
 import {
   Sheet,
   SheetContent,
@@ -48,11 +49,6 @@ const STATUS_FLOW = [
   { value: "booked", label: "Booked", tone: "emerald" },
   { value: "declined", label: "Declined", tone: "muted" },
 ] as const;
-
-const PROPERTY_LABEL: Record<string, string> = {
-  owp: "One Warwick Park",
-  salomons: "Salomons Estate",
-};
 
 const TONE_CLASSES: Record<string, string> = {
   default: "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -100,10 +96,7 @@ export function EnquiryDrawer({
     }
   };
 
-  const property = enquiry
-    ? ((enquiry.property ?? "owp") as keyof typeof PROPERTY_LABEL)
-    : "owp";
-  const propertyName = PROPERTY_LABEL[property] ?? "Unknown";
+  const propertyName = propertyLabel(enquiry?.property);
 
   return (
     <Sheet

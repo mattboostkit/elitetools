@@ -4,13 +4,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { KpiBand } from "./kpi-band";
 import { KpiCard, type KpiDelta } from "./kpi-card";
-
-const PROPERTY_LABEL: Record<string, string> = {
-  owp: "One Warwick Park",
-  salomons: "Salomons Estate",
-  "bewl-water": "Bewl Water",
-  "bewl-adventures": "Bewl Adventures",
-};
+import { propertyLabel } from "@/lib/properties";
 
 function gbp(n: number): string {
   return new Intl.NumberFormat("en-GB", {
@@ -114,11 +108,7 @@ export function DashboardKpis() {
         <KpiCard
           label="Top property"
           loading={loading}
-          value={
-            ins?.topProperty
-              ? PROPERTY_LABEL[ins.topProperty.property] ?? ins.topProperty.property
-              : null
-          }
+          value={ins?.topProperty ? propertyLabel(ins.topProperty.property) : null}
           hint={
             ins?.topProperty
               ? `By revenue · ${gbp(ins.topProperty.value)}`

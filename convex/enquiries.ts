@@ -406,10 +406,15 @@ export const getEnquiriesStats = query({
       read: enquiries.filter((e) => e.status === "read").length,
       responded: enquiries.filter((e) => e.status === "responded").length,
       archived: enquiries.filter((e) => e.status === "archived").length,
-      // Stats by property
+      // Stats by property — every venue in the schema's property union.
       byProperty: {
         owp: enquiries.filter((e) => e.property === "owp").length,
         salomons: enquiries.filter((e) => e.property === "salomons").length,
+        "bewl-water": enquiries.filter((e) => e.property === "bewl-water")
+          .length,
+        "bewl-adventures": enquiries.filter(
+          (e) => e.property === "bewl-adventures"
+        ).length,
       },
       // Stats by assignee (open leads only — new/contacted/quoted count
       // against the team member's active workload; booked/declined don't)

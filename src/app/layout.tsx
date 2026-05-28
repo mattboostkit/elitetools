@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: "%s | Elite Tools",
   },
   description:
-    "Internal CRM and lead management platform for One Warwick Park and Salomons Estate.",
+    "Internal CRM and lead management platform for One Warwick Park, Salomons Estate and Bewl Water.",
   robots: {
     index: false,
     follow: false,
