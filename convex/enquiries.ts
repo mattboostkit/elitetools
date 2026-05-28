@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "./adminAuth";
 import { logEvent } from "./enquiryEvents";
+import { findRecentDuplicate, DEFAULT_DEDUPE_WINDOW_MS } from "./leadDedupe";
 
 // Property type for validation. Mirrors schema.ts — when adding venues,
 // update both this file and schema.ts (and the other modules that
@@ -95,6 +96,127 @@ export const create = mutation({
     });
 
     return enquiryId;
+  },
+});
+
+/**
+ * Idempotent capture for lead sources that can fire more than once per
+ * session — notably the Bewl Water "Ranger" chatbot, whose tool-call history
+ * isn't persisted between requests so the model re-calls capture on later
+ * turns. Within a short window, a repeat capture with the same email + source
+ * + property updates the existing still-"new" enquiry instead of inserting a
+ * duplicate.
+ *
+ * Returns { id, deduped }:
+ *   - deduped: false → a brand-new enquiry was created. The caller should
+ *     send its one-and-only team notification.
+ *   - deduped: true  → matched an existing recent lead; no new row, no new
+ *     notification.
+ *
+ * PUBLIC — no auth (chatbot/form submission). Deliberately does NOT replace
+ * `create`, which the OWP and Salomons forms still use unchanged.
+ */
+export const captureLead = mutation({
+  args: {
+    property: propertyValidator,
+    name: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    subject: v.optional(v.string()),
+    eventType: v.optional(v.string()),
+    preferredDate: v.optional(v.string()),
+    guestCount: v.optional(v.number()),
+    message: v.string(),
+    source: v.optional(v.string()),
+    utmSource: v.optional(v.string()),
+    utmMedium: v.optional(v.string()),
+    utmCampaign: v.optional(v.string()),
+    utmContent: v.optional(v.string()),
+    utmTerm: v.optional(v.string()),
+    gclid: v.optional(v.string()),
+    landingPage: v.optional(v.string()),
+    hearAboutUs: v.optional(v.string()),
+    // Override the dedupe window (ms). Defaults to 30 minutes.
+    dedupeWindowMs: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(args.email)) {
+      throw new Error("Invalid email address");
+    }
+    if (!args.name.trim()) {
+      throw new Error("Name is required");
+    }
+    if (!args.message.trim()) {
+      throw new Error("Message is required");
+    }
+    if (args.guestCount !== undefined && args.guestCount < 1) {
+      throw new Error("Guest count must be at least 1");
+    }
+
+    const email = args.email.toLowerCase().trim();
+    const now = Date.now();
+    const windowMs = args.dedupeWindowMs ?? DEFAULT_DEDUPE_WINDOW_MS;
+
+    // Scan only this property's partition, then match email + source within
+    // the window. Fine at current volume; add a composite index if a single
+    // property's enquiry count grows into the thousands.
+    const samePropertyRows = await ctx.db
+      .query("enquiries")
+      .withIndex("by_property", (q) => q.eq("property", args.property))
+      .collect();
+
+    const dup = findRecentDuplicate(samePropertyRows, {
+      email,
+      source: args.source,
+      now,
+      windowMs,
+    });
+
+    if (dup) {
+      // Same conversation re-capture. Refresh the lead with the latest
+      // (usually fuller) details, but only while the team hasn't touched it.
+      if (dup.status === "new") {
+        await ctx.db.patch(dup._id, {
+          message: args.message.trim(),
+          eventType: args.eventType ?? dup.eventType,
+          subject: args.subject ?? dup.subject,
+          preferredDate: args.preferredDate ?? dup.preferredDate,
+          guestCount: args.guestCount ?? dup.guestCount,
+          // Upgrade a placeholder name if the visitor later gave a real one.
+          name:
+            args.name.trim() && dup.name === "Bewl Ranger visitor"
+              ? args.name.trim()
+              : dup.name,
+        });
+      }
+      return { id: dup._id, deduped: true };
+    }
+
+    const id = await ctx.db.insert("enquiries", {
+      property: args.property,
+      name: args.name.trim(),
+      email,
+      phone: args.phone?.trim(),
+      subject: args.subject,
+      eventType: args.eventType,
+      preferredDate: args.preferredDate,
+      guestCount: args.guestCount,
+      message: args.message.trim(),
+      status: "new",
+      createdAt: now,
+      source: args.source,
+      utmSource: args.utmSource,
+      utmMedium: args.utmMedium,
+      utmCampaign: args.utmCampaign,
+      utmContent: args.utmContent,
+      utmTerm: args.utmTerm,
+      gclid: args.gclid,
+      landingPage: args.landingPage,
+      hearAboutUs: args.hearAboutUs,
+    });
+
+    return { id, deduped: false };
   },
 });
 
