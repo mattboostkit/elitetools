@@ -64,12 +64,177 @@ export default defineSchema({
     gclid: v.optional(v.string()),         // Google Click ID (auto-added by Google Ads)
     landingPage: v.optional(v.string()),   // The page URL where the visitor first landed
     hearAboutUs: v.optional(v.string()),   // Self-reported "how did you hear about us" answer
+    // Link to a deal if this enquiry was converted to a signed contract.
+    // Populated by deals.create when sourceEnquiryId is set. Reverse
+    // lookup via deals.by_sourceEnquiryId index.
+    dealId: v.optional(v.id("deals")),
   })
     .index("by_property", ["property"])
     .index("by_property_status", ["property", "status"])
     .index("by_status", ["status"])
     .index("by_assignedTo", ["assignedTo"])
     .index("by_created", ["createdAt"]),
+
+  // ============================================================================
+  // PHASE 1 — DEALS + SALESPEOPLE + COMMISSION ENGINE
+  // Replaces Salesforce + manual commission calculation. Each `deals` row
+  // represents a signed contract; commission accrual is computed from active
+  // `commissionRules` and surfaced via monthly `commissionPayouts` runs.
+  // ============================================================================
+
+  // Sales team members who can be assigned to deals + earn commission.
+  // Replaces the hardcoded `assigneeValidator` enum in the long run. Linked
+  // to Clerk user via `clerkUserId` (optional — manual-entry reps without a
+  // Clerk login can still earn commission, useful for back-office staff).
+  salespeople: defineTable({
+    name: v.string(),
+    email: v.optional(v.string()),
+    clerkUserId: v.optional(v.string()),
+    defaultCommissionRatePct: v.number(), // e.g. 5 = 5%
+    active: v.boolean(),
+    startDate: v.optional(v.string()), // ISO date string
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_active", ["active"])
+    .index("by_clerkUserId", ["clerkUserId"]),
+
+  // The canonical "sale" record. One row per signed contract. Drives the
+  // commission engine, customer 360, and revenue analytics.
+  deals: defineTable({
+    property: propertyValidator,
+    // Link to the originating lead (optional — manual deal entry doesn't
+    // require an enquiry).
+    sourceEnquiryId: v.optional(v.id("enquiries")),
+    salespersonId: v.id("salespeople"),
+
+    // Customer details — denormalised onto the deal so historic data
+    // survives if the underlying contact is edited later. A future
+    // `customers` table will be linked via customerId.
+    customerName: v.string(),
+    customerEmail: v.string(),
+    customerPhone: v.optional(v.string()),
+
+    // Event details
+    eventType: v.string(), // "wedding" | "corporate" | "venue-hire" | "room-block" | "activities" | "f-and-b" | other
+    eventDate: v.optional(v.string()), // ISO date
+    signedDate: v.string(), // ISO date — drives commission period
+    guestCount: v.optional(v.number()),
+
+    // Money
+    contractValue: v.number(), // Total contract £
+    depositPaid: v.number(), // £ paid as deposit
+    balancePaid: v.number(), // £ paid towards balance
+    // Sum of (depositPaid + balancePaid) is the actual received-to-date.
+    // We deliberately don't derive that; storing the parts lets us show
+    // a payment schedule view later.
+
+    // Status workflow:
+    //   provisional → contracted → completed
+    //                            ↘ cancelled (at any point)
+    // Commission accrues at "contracted" and finalises at "completed".
+    status: v.union(
+      v.literal("provisional"),
+      v.literal("contracted"),
+      v.literal("completed"),
+      v.literal("cancelled")
+    ),
+
+    // Contract PDF in Convex storage (uploaded after signing)
+    contractFileStorageId: v.optional(v.id("_storage")),
+
+    notes: v.optional(v.string()),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_property", ["property"])
+    .index("by_salespersonId", ["salespersonId"])
+    .index("by_status", ["status"])
+    .index("by_signedDate", ["signedDate"])
+    .index("by_property_status", ["property", "status"])
+    .index("by_sourceEnquiryId", ["sourceEnquiryId"]),
+
+  // Commission rules — flexible matrix supporting flat % per rep, tiered,
+  // per-property, or per-eventType. A deal evaluates against ALL active
+  // rules and the most specific matching rule wins (specificity = number
+  // of non-null filters).
+  commissionRules: defineTable({
+    name: v.string(), // Human-readable, e.g. "Christie weddings @ Salomons"
+
+    // Filters — null = matches everything. Specificity is the count of
+    // non-null filters; commission engine picks the highest-specificity
+    // matching rule.
+    salespersonId: v.optional(v.id("salespeople")),
+    property: v.optional(propertyValidator),
+    eventType: v.optional(v.string()),
+    // Tier: rule only applies if monthly deal-value-signed by this rep
+    // is at or above this £ threshold. Null = always applies. Use the
+    // highest qualifying tier when multiple match.
+    minMonthlyDealValue: v.optional(v.number()),
+
+    ratePct: v.number(), // 5 = 5% of contract value
+    // Active window — null = open-ended
+    effectiveFrom: v.string(), // ISO date
+    effectiveTo: v.optional(v.string()),
+
+    active: v.boolean(),
+
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_active", ["active"])
+    .index("by_salespersonId", ["salespersonId"])
+    .index("by_property", ["property"]),
+
+  // Monthly commission payout runs. One row per (period × salesperson)
+  // combination. Status workflow:
+  //   calculated → approved → paid
+  // Each line item references the deal it accrued from; the gross_total
+  // is the sum of line item amounts. Approval requires a second user
+  // (two-person rule for fraud control).
+  commissionPayouts: defineTable({
+    // Period the run covers, e.g. "2026-05" for May 2026
+    period: v.string(),
+    salespersonId: v.id("salespeople"),
+
+    lines: v.array(
+      v.object({
+        dealId: v.id("deals"),
+        ruleName: v.string(), // Snapshot of rule name at calc time
+        ratePct: v.number(),
+        contractValue: v.number(),
+        amount: v.number(), // contractValue * ratePct / 100
+        overrideReason: v.optional(v.string()), // If manually adjusted
+        overriddenAmount: v.optional(v.number()), // Final amount if overridden
+      })
+    ),
+
+    grossTotal: v.number(), // Sum of line amounts (after overrides)
+
+    status: v.union(
+      v.literal("calculated"),
+      v.literal("approved"),
+      v.literal("paid")
+    ),
+
+    calculatedAt: v.number(),
+    calculatedByClerkUserId: v.optional(v.string()),
+
+    approvedAt: v.optional(v.number()),
+    approvedByClerkUserId: v.optional(v.string()),
+
+    paidAt: v.optional(v.number()),
+    paymentReference: v.optional(v.string()), // e.g. Bacs run ID
+
+    notes: v.optional(v.string()),
+  })
+    .index("by_period", ["period"])
+    .index("by_period_salespersonId", ["period", "salespersonId"])
+    .index("by_salespersonId", ["salespersonId"])
+    .index("by_status", ["status"]),
 
   // Newsletter subscriptions - unified across all properties
   newsletters: defineTable({
