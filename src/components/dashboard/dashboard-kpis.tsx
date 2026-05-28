@@ -45,14 +45,14 @@ export function DashboardKpis() {
           label="Open opportunities"
           loading={loading}
           value={sp ? String(sp.openOpportunities.count) : null}
-          hint={sp ? `Value ${gbp(sp.openOpportunities.value)}` : "Value —"}
+          hint={sp ? `Value ${gbp(sp.openOpportunities.value)}` : undefined}
           mono
         />
         <KpiCard
           label="Pending quotes"
           loading={loading}
           value={sp ? String(sp.pendingQuotes.sent) : null}
-          hint={sp ? `${sp.pendingQuotes.draft} draft` : "Sent / awaiting"}
+          hint={sp ? `${sp.pendingQuotes.draft} draft` : undefined}
           mono
         />
         <KpiCard
