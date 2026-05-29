@@ -76,6 +76,29 @@ export default defineSchema({
     .index("by_created", ["createdAt"]),
 
   // ============================================================================
+  // RECRUITMENT — job applications from the careers sections of the marketing
+  // sites. Created by the public `jobApplications.submit` mutation (no auth).
+  // The CV is held in Convex file storage (cvStorageId) — nothing is emailed.
+  // The team triages candidates from the Recruitment admin view.
+  // ============================================================================
+  jobApplications: defineTable({
+    property: v.optional(propertyValidator),
+    role: v.string(),
+    name: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    message: v.optional(v.string()),
+    cvStorageId: v.optional(v.id("_storage")),
+    cvFilename: v.optional(v.string()),
+    status: v.string(), // 'new' | 'reviewing' | 'shortlisted' | 'rejected' | 'hired'
+    source: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_property", ["property"])
+    .index("by_status", ["status"])
+    .index("by_created", ["createdAt"]),
+
+  // ============================================================================
   // PHASE 1 — DEALS + SALESPEOPLE + COMMISSION ENGINE
   // Replaces Salesforce + manual commission calculation. Each `deals` row
   // represents a signed contract; commission accrual is computed from active

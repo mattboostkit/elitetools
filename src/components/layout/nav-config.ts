@@ -139,6 +139,7 @@ export const navSections: NavSection[] = [
       { label: "Activities", href: "/operations/activities", icon: Phone },
       { label: "Calendar", href: "/operations/calendar", icon: Calendar },
       { label: "Properties", href: "/operations/properties", icon: MapPin },
+      { label: "Recruitment", href: "/recruitment", icon: UserPlus },
     ],
   },
   {
