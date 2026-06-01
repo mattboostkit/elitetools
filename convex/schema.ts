@@ -66,6 +66,27 @@ export default defineSchema({
     .index("by_assignedTo", ["assignedTo"])
     .index("by_created", ["createdAt"]),
 
+  // Bewl Ranger chatbot query log. Each visitor question the Ranger handles is
+  // recorded with whether it could answer from its knowledge snapshot. Rows
+  // with answered=false are questions the bot flagged it couldn't handle; they
+  // drive a daily digest emailed to the team so the bot's knowledge can be
+  // improved over time. Written by the public rangerQueries.logQuery mutation
+  // (no auth — same trust model as enquiries.captureLead). emailedAt is set
+  // once a row has been included in a digest so it's never sent twice.
+  rangerQueries: defineTable({
+    property: v.optional(propertyValidator),
+    question: v.string(),
+    answered: v.boolean(),
+    reason: v.optional(v.string()),   // model's note on why it couldn't answer
+    sessionId: v.optional(v.string()),
+    source: v.optional(v.string()),   // e.g. "ranger-bewl-water"
+    createdAt: v.number(),
+    emailedAt: v.optional(v.number()),
+  })
+    .index("by_created", ["createdAt"])
+    .index("by_property", ["property"])
+    .index("by_answered_created", ["answered", "createdAt"]),
+
   // ============================================================================
   // PHASE 1 — DEALS + SALESPEOPLE + COMMISSION ENGINE
   // Replaces Salesforce + manual commission calculation. Each `deals` row
