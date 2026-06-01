@@ -8,7 +8,8 @@ const propertyValidator = v.union(
   v.literal("owp"),
   v.literal("salomons"),
   v.literal("bewl-water"),
-  v.literal("bewl-adventures")
+  v.literal("bewl-adventures"),
+  v.literal("christmas-at-bewl")
 );
 
 // Sales team members who can own a lead. Lowercase literal values;
@@ -241,8 +242,12 @@ export default defineSchema({
     property: v.optional(propertyValidator), // Optional for backward compatibility
     email: v.string(),
     subscribedAt: v.number(),
-    source: v.optional(v.string()), // 'footer', 'popup', etc.
+    source: v.optional(v.string()), // 'footer', 'popup', 'christmas-wait-list', etc.
     status: v.optional(v.string()), // "active", "unsubscribed"
+    // Optional richer fields captured by venue wait lists (e.g. Christmas at
+    // Bewl Water). Other properties' signups simply omit them.
+    firstName: v.optional(v.string()),
+    childAges: v.optional(v.array(v.string())), // e.g. ["under-1","4-7"]
   })
     .index("by_email", ["email"])
     .index("by_property", ["property"]),
