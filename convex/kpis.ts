@@ -31,12 +31,14 @@ export const overview = query({
       "salomons",
       "bewl-water",
       "bewl-adventures",
+      "christmas-at-bewl",
     ] as const;
     const byProperty: Record<(typeof properties)[number], PropStats> = {
       owp: { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
       salomons: { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
       "bewl-water": { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
       "bewl-adventures": { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
+      "christmas-at-bewl": { total: 0, new: 0, quoted: 0, booked: 0, declined: 0 },
     };
     let grandTotal = 0;
     let grandBooked = 0;

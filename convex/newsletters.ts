@@ -1,13 +1,33 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "./adminAuth";
+
+/**
+ * Internal-only: hard-delete a subscriber by email. Not exposed to the public
+ * API or the browser — callable from the Convex dashboard, server scripts, or
+ * the MCP. Used to clean up test rows and to scrub a bad signup on request.
+ */
+export const removeByEmail = internalMutation({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const normalizedEmail = args.email.toLowerCase().trim();
+    const row = await ctx.db
+      .query("newsletters")
+      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
+      .first();
+    if (!row) return { removed: false };
+    await ctx.db.delete(row._id);
+    return { removed: true };
+  },
+});
 
 // Property type for validation
 const propertyValidator = v.union(
   v.literal("owp"),
   v.literal("salomons"),
   v.literal("bewl-water"),
-  v.literal("bewl-adventures")
+  v.literal("bewl-adventures"),
+  v.literal("christmas-at-bewl")
 );
 
 /**
@@ -19,6 +39,9 @@ export const subscribe = mutation({
     property: v.optional(propertyValidator),
     email: v.string(),
     source: v.optional(v.string()),
+    // Optional richer fields from venue wait lists (e.g. Christmas at Bewl).
+    firstName: v.optional(v.string()),
+    childAges: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     // Basic email validation
@@ -36,8 +59,14 @@ export const subscribe = mutation({
       .first();
 
     if (existing) {
-      // If already subscribed and active, return existing subscription
+      // If already subscribed and active, enrich any missing detail (e.g. a
+      // wait-list resubmit that now carries a first name) and return.
       if (existing.status === "active") {
+        await ctx.db.patch(existing._id, {
+          property: existing.property ?? args.property,
+          firstName: existing.firstName ?? args.firstName,
+          childAges: existing.childAges ?? args.childAges,
+        });
         return {
           subscriptionId: existing._id,
           success: true,
@@ -51,6 +80,8 @@ export const subscribe = mutation({
           status: "active",
           subscribedAt: Date.now(),
           property: args.property || existing.property, // Update property if provided
+          firstName: existing.firstName ?? args.firstName,
+          childAges: existing.childAges ?? args.childAges,
         });
         return {
           subscriptionId: existing._id,
@@ -67,6 +98,8 @@ export const subscribe = mutation({
       subscribedAt: Date.now(),
       source: args.source,
       status: "active",
+      firstName: args.firstName,
+      childAges: args.childAges,
     });
 
     return { subscriptionId, success: true, alreadySubscribed: false };
