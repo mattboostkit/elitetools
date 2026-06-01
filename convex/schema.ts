@@ -8,7 +8,8 @@ const propertyValidator = v.union(
   v.literal("owp"),
   v.literal("salomons"),
   v.literal("bewl-water"),
-  v.literal("bewl-adventures")
+  v.literal("bewl-adventures"),
+  v.literal("christmas-at-bewl")
 );
 
 // Sales team members who can own a lead. Lowercase literal values;
@@ -73,6 +74,29 @@ export default defineSchema({
     .index("by_property_status", ["property", "status"])
     .index("by_status", ["status"])
     .index("by_assignedTo", ["assignedTo"])
+    .index("by_created", ["createdAt"]),
+
+  // ============================================================================
+  // RECRUITMENT — job applications from the careers sections of the marketing
+  // sites. Created by the public `jobApplications.submit` mutation (no auth).
+  // The CV is held in Convex file storage (cvStorageId) — nothing is emailed.
+  // The team triages candidates from the Recruitment admin view.
+  // ============================================================================
+  jobApplications: defineTable({
+    property: v.optional(propertyValidator),
+    role: v.string(),
+    name: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    message: v.optional(v.string()),
+    cvStorageId: v.optional(v.id("_storage")),
+    cvFilename: v.optional(v.string()),
+    status: v.string(), // 'new' | 'reviewing' | 'shortlisted' | 'rejected' | 'hired'
+    source: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_property", ["property"])
+    .index("by_status", ["status"])
     .index("by_created", ["createdAt"]),
 
   // ============================================================================
@@ -241,8 +265,12 @@ export default defineSchema({
     property: v.optional(propertyValidator), // Optional for backward compatibility
     email: v.string(),
     subscribedAt: v.number(),
-    source: v.optional(v.string()), // 'footer', 'popup', etc.
+    source: v.optional(v.string()), // 'footer', 'popup', 'christmas-wait-list', etc.
     status: v.optional(v.string()), // "active", "unsubscribed"
+    // Optional richer fields captured by venue wait lists (e.g. Christmas at
+    // Bewl Water). Other properties' signups simply omit them.
+    firstName: v.optional(v.string()),
+    childAges: v.optional(v.array(v.string())), // e.g. ["under-1","4-7"]
   })
     .index("by_email", ["email"])
     .index("by_property", ["property"]),
