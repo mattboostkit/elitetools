@@ -1,5 +1,6 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { requireAdmin } from "./adminAuth";
 import { propertyValidator } from "./properties";
 
@@ -75,6 +76,15 @@ export const subscribe = mutation({
           firstName: existing.firstName ?? args.firstName,
           childAges: existing.childAges ?? args.childAges,
         });
+        // Notify the team of the re-subscribe (best-effort, never blocks).
+        await ctx.scheduler.runAfter(0, internal.newsletterActions.notifySignup, {
+          email: normalizedEmail,
+          property: args.property || existing.property,
+          firstName: args.firstName ?? existing.firstName,
+          childAges: args.childAges ?? existing.childAges,
+          source: args.source,
+          kind: "reactivated",
+        });
         return {
           subscriptionId: existing._id,
           success: true,
@@ -92,6 +102,16 @@ export const subscribe = mutation({
       status: "active",
       firstName: args.firstName,
       childAges: args.childAges,
+    });
+
+    // Notify the team of every new sign-up, from any venue (best-effort).
+    await ctx.scheduler.runAfter(0, internal.newsletterActions.notifySignup, {
+      email: normalizedEmail,
+      property: args.property,
+      firstName: args.firstName,
+      childAges: args.childAges,
+      source: args.source,
+      kind: "new",
     });
 
     return { subscriptionId, success: true, alreadySubscribed: false };
