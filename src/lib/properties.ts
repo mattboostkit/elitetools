@@ -10,7 +10,12 @@
 // `?? "owp"` fallback and were mislabelled as "One Warwick Park". Centralising
 // the list here means a missing venue can never silently masquerade as another.
 
-export type Property = "owp" | "salomons" | "bewl-water" | "bewl-adventures";
+export type Property =
+  | "owp"
+  | "salomons"
+  | "bewl-water"
+  | "bewl-adventures"
+  | "christmas-at-bewl";
 
 export interface PropertyMeta {
   label: string;
@@ -24,6 +29,7 @@ export const PROPERTY_ORDER: Property[] = [
   "salomons",
   "bewl-water",
   "bewl-adventures",
+  "christmas-at-bewl",
 ];
 
 export const PROPERTY_META: Record<Property, PropertyMeta> = {
@@ -31,6 +37,7 @@ export const PROPERTY_META: Record<Property, PropertyMeta> = {
   salomons: { label: "Salomons Estate", dot: "bg-emerald-500" },
   "bewl-water": { label: "Bewl Water", dot: "bg-sky-500" },
   "bewl-adventures": { label: "Bewl Adventures", dot: "bg-orange-500" },
+  "christmas-at-bewl": { label: "Christmas at Bewl Water", dot: "bg-rose-500" },
 };
 
 const PROPERTY_SET = new Set<string>(PROPERTY_ORDER);
