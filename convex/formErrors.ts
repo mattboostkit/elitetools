@@ -1,14 +1,9 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { propertyValidator } from "./properties";
 import { requireAdmin } from "./adminAuth";
 
 // Property type for validation
-const propertyValidator = v.union(
-  v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl-water"),
-  v.literal("bewl-adventures")
-);
 
 /**
  * Log a form submission error

@@ -12,12 +12,13 @@ describe("property metadata", () => {
     expect(Object.keys(PROPERTY_META).sort()).toEqual([...PROPERTY_ORDER].sort());
   });
 
-  it("covers all four ELC venues", () => {
+  it("covers all five ELC venues", () => {
     expect(PROPERTY_ORDER).toEqual([
       "owp",
       "salomons",
       "bewl-water",
       "bewl-adventures",
+      "christmas-at-bewl",
     ]);
   });
 });
@@ -28,6 +29,7 @@ describe("propertyLabel", () => {
     expect(propertyLabel("salomons")).toBe("Salomons Estate");
     expect(propertyLabel("bewl-water")).toBe("Bewl Water");
     expect(propertyLabel("bewl-adventures")).toBe("Bewl Adventures");
+    expect(propertyLabel("christmas-at-bewl")).toBe("Christmas at Bewl Water");
   });
 
   // Regression guard for the original bug: Bewl Water must never render as OWP.
@@ -35,7 +37,7 @@ describe("propertyLabel", () => {
     expect(propertyLabel(undefined)).toBe("Unknown");
     expect(propertyLabel(null)).toBe("Unknown");
     expect(propertyLabel("")).toBe("Unknown");
-    expect(propertyLabel("christmas-at-bewl")).toBe("Unknown");
+    expect(propertyLabel("not-a-real-venue")).toBe("Unknown");
     // Explicitly: an unrecognised value is not silently "One Warwick Park".
     expect(propertyLabel("something-new")).not.toBe("One Warwick Park");
   });

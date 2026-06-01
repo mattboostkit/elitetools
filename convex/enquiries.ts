@@ -1,17 +1,12 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { propertyValidator } from "./properties";
 import { requireAdmin } from "./adminAuth";
 import { logEvent } from "./enquiryEvents";
 
 // Property type for validation. Mirrors schema.ts — when adding venues,
 // update both this file and schema.ts (and the other modules that
 // duplicate this validator).
-const propertyValidator = v.union(
-  v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl-water"),
-  v.literal("bewl-adventures")
-);
 
 // Sales team assignee
 const assigneeValidator = v.union(

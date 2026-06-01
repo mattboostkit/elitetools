@@ -1,16 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-
-// Property validator for multi-property support.
-// Add new venues here; the field is v.optional() everywhere so existing
-// rows remain valid when the union is widened.
-const propertyValidator = v.union(
-  v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl-water"),
-  v.literal("bewl-adventures"),
-  v.literal("christmas-at-bewl")
-);
+import { propertyValidator } from "./properties";
 
 // Sales team members who can own a lead. Lowercase literal values;
 // display name is derived in the UI.

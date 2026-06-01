@@ -1,14 +1,8 @@
 import { v } from "convex/values";
+import { propertyValidator } from "./properties";
 import { mutation, query } from "./_generated/server";
 import { requireAdmin } from "./adminAuth";
 import type { Doc, Id } from "./_generated/dataModel";
-
-const propertyValidator = v.union(
-  v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl-water"),
-  v.literal("bewl-adventures")
-);
 
 const statusValidator = v.union(
   v.literal("provisional"),

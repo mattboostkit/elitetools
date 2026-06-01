@@ -22,21 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Download, Mail } from "lucide-react";
-
-type Property =
-  | "owp"
-  | "salomons"
-  | "bewl-water"
-  | "bewl-adventures"
-  | "christmas-at-bewl";
-
-const PROPERTY_LABEL: Record<Property, string> = {
-  owp: "One Warwick Park",
-  salomons: "Salomons Estate",
-  "bewl-water": "Bewl Water",
-  "bewl-adventures": "Bewl Adventures",
-  "christmas-at-bewl": "Christmas at Bewl Water",
-};
+import { type Property, PROPERTY_ORDER, propertyLabel } from "@/lib/properties";
 
 const STATUS_TONE: Record<string, string> = {
   active: "bg-emerald-50 text-emerald-700",
@@ -81,7 +67,7 @@ export default function NewsletterPage() {
         r.email,
         r.firstName ?? "",
         (r.childAges ?? []).join("; "),
-        r.property ? PROPERTY_LABEL[r.property as Property] ?? r.property : "",
+        r.property ? propertyLabel(r.property) : "",
         r.source ?? "",
         r.status ?? "",
         new Date(r.subscribedAt).toISOString(),
@@ -125,9 +111,9 @@ export default function NewsletterPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All venues</SelectItem>
-              {(Object.keys(PROPERTY_LABEL) as Property[]).map((p) => (
+              {PROPERTY_ORDER.map((p) => (
                 <SelectItem key={p} value={p}>
-                  {PROPERTY_LABEL[p]}
+                  {propertyLabel(p)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -167,7 +153,7 @@ export default function NewsletterPage() {
                 <TableCell colSpan={7} className="py-10 text-center text-sm text-neutral-400">
                   No subscribers
                   {propertyFilter !== "all"
-                    ? ` for ${PROPERTY_LABEL[propertyFilter]}`
+                    ? ` for ${propertyLabel(propertyFilter)}`
                     : ""}{" "}
                   yet.
                 </TableCell>
@@ -181,20 +167,18 @@ export default function NewsletterPage() {
                     </a>
                   </TableCell>
                   <TableCell className="text-sm text-neutral-700">
-                    {r.firstName || "—"}
+                    {r.firstName || "–"}
                   </TableCell>
                   <TableCell className="text-sm text-neutral-700">
                     {r.childAges && r.childAges.length > 0
                       ? r.childAges.join(", ")
-                      : "—"}
+                      : "–"}
                   </TableCell>
                   <TableCell className="text-sm text-neutral-700">
-                    {r.property
-                      ? PROPERTY_LABEL[r.property as Property] ?? r.property
-                      : "—"}
+                    {r.property ? propertyLabel(r.property) : "–"}
                   </TableCell>
                   <TableCell className="text-sm text-neutral-500">
-                    {r.source || "—"}
+                    {r.source || "–"}
                   </TableCell>
                   <TableCell>
                     <span

@@ -1,10 +1,11 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "./adminAuth";
+import { propertyValidator } from "./properties";
 
 /**
  * Internal-only: hard-delete a subscriber by email. Not exposed to the public
- * API or the browser — callable from the Convex dashboard, server scripts, or
+ * API or the browser; callable from the Convex dashboard, server scripts, or
  * the MCP. Used to clean up test rows and to scrub a bad signup on request.
  */
 export const removeByEmail = internalMutation({
@@ -20,15 +21,6 @@ export const removeByEmail = internalMutation({
     return { removed: true };
   },
 });
-
-// Property type for validation
-const propertyValidator = v.union(
-  v.literal("owp"),
-  v.literal("salomons"),
-  v.literal("bewl-water"),
-  v.literal("bewl-adventures"),
-  v.literal("christmas-at-bewl")
-);
 
 /**
  * Subscribe to the newsletter
